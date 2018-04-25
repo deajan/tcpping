@@ -19,7 +19,7 @@
 # 2008/02/10 v1.7 make -C work when reverse lookup fails, courtesy of Fabrice Le Dorze <Fabrice.LeDorze@apx.fr>
 # 2010/06/04 v1.8 make -C work when ipaddress doesn't reply, courtesy of Yann Beulque
 # 2018/04/25 v2.0 make tcpping work with recent traceroute binary (tested with version 2.0.22)
-#                 drop tcptraceroute support
+#                 drop tcptraceroute prerequisite
 #                 multiple small improvements (local variables, better readability)
 #                 courtesy of Orsiris de Jong <ozy@netpower.fr>
 
