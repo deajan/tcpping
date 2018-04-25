@@ -22,6 +22,8 @@
 #                 drop tcptraceroute prerequisite
 #                 multiple small improvements (local variables, better readability)
 #                 courtesy of Orsiris de Jong <ozy@netpower.fr>
+# TODO: Optional arguments are not passed as of today (see old arguments from tcptraceroute)
+
 
 ver="v1.9"
 format="%Y%m%d%H%M%S"
