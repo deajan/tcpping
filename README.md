@@ -4,11 +4,9 @@
 
 This script is a fork of Richard Van de Berg's tcpping script, supporiting newer traceroute binaries.
 
-It comes with various improvements like language agonstic functionality, better error detection, and removed tcptraceroute dependancy.
+It comes with various improvements like language agonstic functionality, better error detection, debug, and removed tcptraceroute dependancy.
 
 This is still a basic work and has only been tested on CentOS 7 and smokeping 2.7.2 so far.
-
-There is still a bit work todo in order to handle optional arguments as did tcptraceroute.
 
 ## Installation
 
@@ -23,5 +21,5 @@ Exapmple command that smokeping would use
 
 ## Licence and improvements
 
-Altough there are probably better tools out there (hping, nmap, etc), this is still a quick and handy tool, so every improvement / fork / pull request is more than welcome.
+Altough there are probably better tools out there (hping, nmap, etc), this is still a quick and handy tool used by smokeping, so every improvement / fork / pull request is more than welcome.
 Richard linked to the GPL licence which was GPLv2 at the time of the script being written, but now the link points to GPLv3 so I guess we're good with the current GPL version.
