@@ -21,16 +21,20 @@
 # 2018/04/25 v2.0 make tcpping work with recent traceroute binary (tested with version 2.0.22)
 #                 added language agonstic traceroute support
 #                 drop tcptraceroute prerequisite
+#                 added support for other ttl than 255
+#                 added -z debug parameter which shows what is actually sent to traceroute
+#                 removed elder options (-l, -p which is defined as ending optional argument)
 #                 multiple small improvements (local variables, better readability)
 #                 courtesy of Orsiris de Jong <ozy@netpower.fr>
-# TODO: Optional arguments are not passed as of today (see old arguments from tcptraceroute)
 
+_DEBUG=false
 ver="v2.0-dev"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
 C="no"
-ttl=255
+f_ttl=255
+m_ttl=255
 seq=0
 numberOfQueries=1
 repeatWaitTime=1
@@ -41,137 +45,179 @@ topts=""
 export LANG=C
 
 usage () {
-        name=`basename $0`
-        echo "tcpping $ver Richard van den Berg <richard@vdberg.org>"
-        echo
-        echo "Usage: $name [-d] [-c] [-C] [-w sec] [-q num] [-x count] ipaddress [port]"
-        echo
-        echo "        -d   print timestamp before every result"
-        echo "        -c   print a columned result line"
-        echo "        -C   print in the same format as fping's -C option"
-        echo "        -w   wait time in seconds (defaults to 3)"
-        echo "        -r   repeat every n seconds (defaults to 1)"
-        echo "        -x   repeat n times (defaults to unlimited)"
-        echo
-        echo "Default port is 80"
-        echo "See also: man traceroute"
-        echo
+	name=`basename $0`
+	echo "tcpping $ver Richard van den Berg <richard@vdberg.org>"
+	echo
+	echo "Usage: $name [-d] [-c] [-C] [-w sec] [-q num] [-x count] ipaddress [port]"
+	echo
+	echo "        -d            print timestamp before every result"
+	echo "        -c            print a columned result line"
+	echo "        -C            print in the same format as fping's -C option"
+	echo "        -w            wait time in seconds (defaults to 3)"
+	echo "        -r            repeat every n seconds (defaults to 1)"
+	echo "        -x            repeat n times (defaults to unlimited)"
+	echo "        -f            first ttl (defaults to 255), see traceroute man"
+	echo "        -m            max ttl (defaults to 255), see traceroute man"
+	echo "        -nNFASEisfm   see traceroute man"
+	echo "        --sport       define source port, see traceroute man"
+	echo "        -z            show what command is actually sent to traceroute (debug)"
+	echo
+	echo "Default port is 80"
+	echo "See also: man traceroute"
+	echo
 }
 
 # Check if site can be reached via TCP SYN
 _checksite() {
-        local host="${1}"
-        local port="${2:-80}"
-        local args="${@: -1:1}"
-        local ttr
+	local host="${1}"
+	local port="${2:-80}"
+	local args="${@: -1:1}"
+	local traceRoute
+	local traceRouteCommand
 
-        ttr=`traceroute -T -f ${ttl} -m ${ttl} -q ${numberOfQueries} -w ${timeToWait} -p ${port} ${host} 2>&1`
-        if echo "${ttr}" | egrep -i "(bad destination|got roo|not known|cannot handle)" >/dev/null 2>&1; then
-                echo "${ttr}"
-                exit 1
-        fi
+	traceRouteCommand="traceroute -T -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} -p ${port} ${host}"
+	if [ $_DEBUG == true ]; then
+		echo "$traceRouteCommand"
+	fi
+	traceRoute=`$traceRouteCommand 2>&1`
+
+	if echo "${traceRoute}" | egrep -i "(bad destination|got roo|not known|cannot handle)" >/dev/null 2>&1; then
+		echo "${traceRoute}"
+		exit 1
+	fi
 }
 
 # Measure latency via TCP SYN
 _testsite() {
-        local myseq="${1}"
-        shift
-        [ "${c}" = "yes" ] && nows=`date +${format}`
-        [ "${d}" = "yes" ] && nowd=`date`
+	local host="${1}"
+	local port="${2:-80}"
+	local myseq="${3}"
 
-        local host="${1}"
-        local port="${2:-80}"
+	shift
+	[ "${c}" = "yes" ] && nows=`date +${format}`
+	[ "${d}" = "yes" ] && nowd=`date`
 
-        local ttr
-        local host
-        local rtt
+	local traceRoute
+	local traceRouteCommand
+	local foundHost
+	local rtt
 
+	# Remove first line from result
+	traceRouteCommand="traceroute -T -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} -p ${port} ${host}"
+	if [ $_DEBUG == true ]; then
+		echo "$traceRouteCommand"
+	fi
+	traceRoute=`$traceRouteCommand | awk '{if (NR!=1) {print}}' 2>/dev/null`
+	foundHost=`echo "${traceRoute}" | awk '{print $2" "$3}'`
 
+	if [ "$foundHost" != "" ] && [ "$foundHost" != "* " ]; then
+		host="$foundHost"
+	fi
 
-        # Remove first line from result
-        ttr=`traceroute -T -f ${ttl} -m ${ttl} -q ${numberOfQueries} -w ${timeToWait} -p ${port} ${host} | awk '{if (NR!=1) {print}}' 2>/dev/null`
-        host=`echo "${ttr}" | awk '{print $2" "$3}'`
-        rtt=`echo "${ttr}" | awk '{print $4}'`
-        #TODO: add not variable (and rename it to be understandable)
+	rtt=`echo "${traceRoute}" | awk '{print $4}'`
+	#TODO: add not variable (and rename it to be understandable)
 
-        [ "${d}" = "yes" ] && echo "$nowd"
-        if [ "${c}" = "yes" ]; then
-                if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
-                        echo "$myseq $nows $rtt $host"
-                else
-                        echo "$myseq $nows $max $host"
-                fi
-        elif [ "${C}" = "yes" ]; then
-                if [ "$myseq" = "0" ]; then
-                        echo -n "$1 :"
-                fi
-                if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
-                        if [ $rtt != "255" ]; then
-                                echo -n " $rtt"
-                        else
-                                echo -n " -"
-                        fi
-                else
-                        echo -n " -"
-                fi
-                if [ "$x" = "1" ]; then
-                        echo
-                fi
-        else
-                #TODO: rework this
-                echo "${ttr}" | sed -e "s/^.*\*.*$/seq $myseq: no response (timeout)/" -e "s/^$ttl /seq $myseq: tcp response from/"
-        fi
+	[ "${d}" = "yes" ] && echo "$nowd"
+	if [ "${c}" = "yes" ]; then
+		if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
+			echo "$myseq $nows $rtt $host"
+		else
+			echo "$myseq $nows $max $host"
+		fi
+	elif [ "${C}" = "yes" ]; then
+		if [ "$myseq" = "0" ]; then
+			echo -n "$host :"
+		fi
+		if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
+			if [ $rtt != "255" ]; then
+				echo -n " $rtt"
+			else
+				echo -n " -"
+			fi
+		else
+			echo -n " -"
+		fi
+		if [ "$x" = "1" ]; then
+			echo
+		fi
+	else
+		echo "${traceRoute}" | sed -e "s/^.*\*.*$/seq $myseq: no response (timeout)/" -e "s/^$ttl /seq $myseq: tcp response from/"
+	fi
 }
 
-while getopts dhq:w:cr:nNFSAEi:f:l:m:p:s:x:C opt ; do
-        case "$opt" in
-                d|c|C) eval $opt="yes" ;;
-                q|w|r|x) eval $opt="$OPTARG" ;;
-                n|N|F|S|A|E) topt="$topt -$opt" ;;
-                i|l|p|s) topt="$topt -$opt $OPTARG" ;;
-                f|m) ttl="$OPTARG" ;;
-                ?) usage; exit ;;
-        esac
+while getopts dhzq:w:cr:nNFSAEi:f:l:m:p:s:x:C opt ; do
+	case "$opt" in
+		d|c|C) eval $opt="yes" ;;
+		q|w|r|x) eval $opt="$OPTARG" ;;
+		n|N|F|S|A|E) topt="$topt -$opt" ;;
+		i|s) topt="$topt -$opt $OPTARG" ;;
+		f) f_ttl="$OPTARG" ;;
+		m) m_ttl="$OPTARG" ;;
+		z) _DEBUG=true ;;
+		?) usage; exit ;;
+	esac
 done
 
 shift `expr $OPTIND - 1`
 
 if [ "x$1" = "x" ]; then
-        usage
-        exit
+	usage
+	exit
 fi
 
 max=`echo "${timeToWait} * 1000" | bc`
 
 if [ `date +%s` != "%s" ]; then
-        format="%s"
+	format="%s"
 fi
 
-_checksite ${topt} $*
+# Since port argument is not mandatory, we want do determine whether it was given or not
+beforeLastArg="${@: -2:1}"
+lastArg="${@: -1:1}"
+
+case $lastArg in
+	''|*[!0-9]*)
+	# Last argument is not numeric, assuming it's an FQDN or IP
+	host=$lastArg
+	;;
+	*)
+	# Last argument is numeric, assuming it's a port number
+	host=$beforeLastArg
+	port=$lastArg
+	;;
+esac
+
+_checksite "${host}" "${port}" ${topt}
 
 if [ "$x" = "" ]; then
-        while [ true ] ; do
-                _testsite ${seq} ${topt} $* &
-                pid=$!
-                if [ "${C}" = "yes" ]; then
-                        wait $pid
-                fi
-                seq=`expr $seq + 1`
-                sleep ${repeatWaitTime}
-        done
+	while [ true ] ; do
+		_testsite "${host}" "${port}" ${seq} ${topt} &
+		pid=$!
+		if [ "${C}" = "yes" ]; then
+			wait $pid
+		fi
+		seq=`expr $seq + 1`
+		if [ $seq -gt 0 ]; then
+			_DEBUG=false
+		fi
+		sleep ${repeatWaitTime}
+	done
 else
-        while [ "$x" -gt 0 ] ; do
-                _testsite ${seq} ${topt} $* &
-                pid=$!
-                if [ "${C}" = "yes" ]; then
-                        wait $pid
-                fi
-                seq=`expr $seq + 1`
-                x=`expr $x - 1`
-                if [ "$x" -gt 0 ]; then
-                        sleep ${repeatWaitTime}
-                fi
-        done
+	while [ "$x" -gt 0 ] ; do
+		_testsite "${host}" "${port}" ${seq} ${topt} &
+		pid=$!
+		if [ "${C}" = "yes" ]; then
+			wait $pid
+		fi
+		seq=`expr $seq + 1`
+		if [ $seq -gt 0 ]; then
+			_DEBUG=false
+		fi
+		x=`expr $x - 1`
+		if [ "$x" -gt 0 ]; then
+			sleep ${repeatWaitTime}
+		fi
+	done
 fi
 
 exit
