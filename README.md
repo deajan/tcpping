@@ -8,6 +8,8 @@ Usage is the same and should work out of the box for smokeping.
 It comes with various improvements like language agonstic functionality, better error detection, debug, and removed tcptraceroute dependancy.
 
 This is still a basic work and has only been tested on CentOS 7, FreeBSD 11 and smokeping 2.7.2 so far.
+On CentOS 7, traceroute 2.0.22  has been tested.
+On FreeBSD, traceroute 1.4a12 has been tested.
 
 ## Installation
 
