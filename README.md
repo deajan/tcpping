@@ -1,12 +1,13 @@
 # tcpping
 
-### fork of elder tcpping v1.8 script running with newer traceroute binary
+## fork of elder tcpping v1.8 script running with newer traceroute binary
 
 This script is a fork of Richard Van de Berg's tcpping script, supporiting newer traceroute binaries.
+Usage is the same and should work out of the box for smokeping.
 
 It comes with various improvements like language agonstic functionality, better error detection, debug, and removed tcptraceroute dependancy.
 
-This is still a basic work and has only been tested on CentOS 7 and smokeping 2.7.2 so far.
+This is still a basic work and has only been tested on CentOS 7, FreeBSD 11 and smokeping 2.7.2 so far.
 
 ## Installation
 
@@ -14,7 +15,7 @@ This is still a basic work and has only been tested on CentOS 7 and smokeping 2.
 
 ## Usage
 
-Exapmple command that smokeping would use
+Example command smokeping would use
 
 `tcpping -C -x 5 myhost 80`
 
