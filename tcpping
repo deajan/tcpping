@@ -132,11 +132,20 @@ getLocalOS() {
 _checkSite() {
 	local host="${1}"
 	local port="${2:-80}"
-	local args="${@: -1:1}"
+
+	local args
+	local i=1
+	for givenArgs in "${@}"; do
+		if [ $i -gt 2 ]; then
+			args="$args $givenArgs"
+		fi
+		i=`expr $i + 1`
+	done
+
 	local traceRoute
 	local traceRouteCommand
 
-	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} -p ${port} ${host}"
+	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
 	if [ $_DEBUG == true ]; then
 		echo "$traceRouteCommand"
 	fi
@@ -154,17 +163,26 @@ _testSite() {
 	local port="${2:-80}"
 	local myseq="${3}"
 
-	shift
-	[ "${c}" = "yes" ] && nows=`date +${format}`
-	[ "${d}" = "yes" ] && nowd=`date`
+	local args
+	local i=1
+	for givenArgs in "${@}"; do
+		if [ $i -gt 3 ]; then
+			args="$args $givenArgs"
+		fi
+		i=`expr $i + 1`
+	done
 
 	local traceRoute
 	local traceRouteCommand
 	local foundHost
 	local rtt
 
+	shift
+	[ "${c}" = "yes" ] && nows=`date +${format}`
+	[ "${d}" = "yes" ] && nowd=`date`
+
 	# Remove first line from result
-	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} -p ${port} ${host}"
+	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
 	if [ $_DEBUG == true ]; then
 		echo "$traceRouteCommand"
 	fi
@@ -236,16 +254,26 @@ getLocalOS
 
 if [ "$LOCAL_OS" == "BSD" ] || [ "$LOCAL_OS" == "MacOSX" ]; then
 	protoOptions="-P TCP"
-	# This works in csh
-	set last = $#argv
-	beforeLastArg=$argv[$last-1]
-	lastArg=$argv[$last]
-else
+#	# This works in csh
+#	set last = $#argv
+#	beforeLastArg=$argv[$last-1]
+#	lastArg=$argv[$last]
+#else
 	# This works with bash, ksh
 	# Since port argument is not mandatory, we want do determine whether it was given or not
-	beforeLastArg="${@: -2:1}"
-	lastArg="${@: -1:1}"
+#	beforeLastArg="${@: -2:1}"
+#	lastArg="${@: -1:1}"
 fi
+
+i=1
+for args in "${@}"; do
+	if [ $i -eq $# ]; then
+		lastArg=$args
+	elif [ $i -eq `expr $# - 1` ]; then
+		beforeLastArg=$args
+	fi
+	i=`expr $i + 1`
+done
 
 case $lastArg in
 	''|*[!0-9]*)
