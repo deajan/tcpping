@@ -133,7 +133,7 @@ _checkSite() {
 	local host="${1}"
 	local port="${2:-80}"
 
-	local args
+	local args=
 	local i=1
 	for givenArgs in "${@}"; do
 		if [ $i -gt 2 ]; then
@@ -142,13 +142,14 @@ _checkSite() {
 		i=`expr $i + 1`
 	done
 
-	local traceRoute
-	local traceRouteCommand
+	local traceRoute=
+	local traceRouteCommand=
 
 	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
 	if [ $_DEBUG == true ]; then
 		echo "$traceRouteCommand"
 	fi
+
 	traceRoute=`$traceRouteCommand 2>&1`
 
 	if echo "${traceRoute}" | egrep -i "(bad destination|got roo|not known|cannot handle)" >/dev/null 2>&1; then
@@ -163,7 +164,7 @@ _testSite() {
 	local port="${2:-80}"
 	local myseq="${3}"
 
-	local args
+	local args=
 	local i=1
 	for givenArgs in "${@}"; do
 		if [ $i -gt 3 ]; then
@@ -172,10 +173,10 @@ _testSite() {
 		i=`expr $i + 1`
 	done
 
-	local traceRoute
-	local traceRouteCommand
-	local foundHost
-	local rtt
+	local traceRoute=
+	local traceRouteCommand=
+	local foundHost=
+	local rtt=
 
 	shift
 	[ "${c}" = "yes" ] && nows=`date +${format}`
@@ -186,7 +187,14 @@ _testSite() {
 	if [ $_DEBUG == true ]; then
 		echo "$traceRouteCommand"
 	fi
-	traceRoute=`$traceRouteCommand | awk '{if (NR!=1) {print}}' 2>/dev/null`
+
+	# BSD traceroute outputs header line to stderr while outputting results to stdout, whereas linux versions output everything to stdout
+	if [ "$LOCAL_OS" == "BSD" ] || [ "$LOCAL_OS" == "MacOSX" ]; then
+		traceRoute=`$traceRouteCommand 2>/dev/null`
+	else
+		traceRoute=`$traceRouteCommand 2>/dev/null | awk 'NR>1'`
+	fi
+
 	foundHost=`echo "${traceRoute}" | awk '{print $2" "$3}'`
 
 	if [ "$foundHost" != "" ] && [ "$foundHost" != "* " ]; then
@@ -194,7 +202,7 @@ _testSite() {
 	fi
 
 	rtt=`echo "${traceRoute}" | awk '{print $4}'`
-	#TODO: add not variable (and rename it to be understandable)
+	not=`echo "${rtt}" | tr -d ".0123456789"`
 
 	[ "${d}" = "yes" ] && echo "$nowd"
 	if [ "${c}" = "yes" ]; then
