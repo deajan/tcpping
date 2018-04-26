@@ -28,7 +28,7 @@
 #                 multiple small improvements (local variables, better readability)
 #                 courtesy of Orsiris de Jong <ozy@netpower.fr>
 
-ver="v2.0-dev"
+ver="v2.0"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
