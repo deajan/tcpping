@@ -195,11 +195,12 @@ _testSite() {
 		traceRoute=`$traceRouteCommand 2>/dev/null | awk 'NR>1'`
 	fi
 
-	foundHost=`echo "${traceRoute}" | awk '{print $2" "$3}'`
-
-	if [ "$foundHost" != "" ] && [ "$foundHost" != "* " ]; then
-		host="$foundHost"
-	fi
+	# Smokeping does not like double output (fqdn + ip), so we leave host as given by smokeping
+	#foundHost=`echo "${traceRoute}" | awk '{print $2" "$3}'`
+	#
+	#if [ "$foundHost" != "" ] && [ "$foundHost" != "* " ]; then
+	#	host="$foundHost"
+	#fi
 
 	rtt=`echo "${traceRoute}" | awk '{print $4}'`
 	not=`echo "${rtt}" | tr -d ".0123456789"`
@@ -262,15 +263,6 @@ getLocalOS
 
 if [ "$LOCAL_OS" == "BSD" ] || [ "$LOCAL_OS" == "MacOSX" ]; then
 	protoOptions="-P TCP"
-#	# This works in csh
-#	set last = $#argv
-#	beforeLastArg=$argv[$last-1]
-#	lastArg=$argv[$last]
-#else
-	# This works with bash, ksh
-	# Since port argument is not mandatory, we want do determine whether it was given or not
-#	beforeLastArg="${@: -2:1}"
-#	lastArg="${@: -1:1}"
 fi
 
 i=1
