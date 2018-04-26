@@ -245,6 +245,7 @@ else
 	# Since port argument is not mandatory, we want do determine whether it was given or not
 	beforeLastArg="${@: -2:1}"
 	lastArg="${@: -1:1}"
+fi
 
 case $lastArg in
 	''|*[!0-9]*)
