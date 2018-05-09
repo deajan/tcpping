@@ -27,6 +27,8 @@
 #                 removed elder options (-l, -p which is defined as ending optional argument)
 #                 multiple small improvements (local variables, better readability)
 #                 courtesy of Orsiris de Jong <ozy@netpower.fr>
+# 2018/05/09 v2.1-dev
+#                 added preflight checks for traceroute and bc binaries
 
 ver="v2.0"
 format="%Y%m%d%H%M%S"
@@ -121,11 +123,23 @@ getLocalOS() {
 		;;
 		*)
 		if [ "$IGNORE_OS_TYPE" == "yes" ]; then
-			echo "Running on unknown local OS [$localOsVar]." "WARN"
+			echo "Running on unknown local OS [$localOsVar]."
 			exit 1
 		fi
 		;;
 	esac
+}
+
+checkEnvironment() {
+	if ! type traceroute > /dev/null 2>&1 ; then
+		echo "traceroute binary not found. Please install it first"
+		exit 1
+	fi
+
+	if ! type bc > /dev/null 2>&1 ; then
+		echo "bc binary not found. Please install it first."
+		exit 1
+	fi
 }
 
 # Check if site can be reached via TCP SYN
@@ -232,6 +246,8 @@ _testSite() {
 		echo "${traceRoute}" | sed -e "s/^.*\*.*$/seq $myseq: no response (timeout)/" -e "s/^$ttl /seq $myseq: tcp response from/"
 	fi
 }
+
+checkEnvironment
 
 while getopts dhzq:w:cr:nNFSAEi:f:l:m:p:s:x:C opt ; do
 	case "$opt" in
