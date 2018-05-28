@@ -25,4 +25,6 @@ Example command smokeping would use
 ## Licence and improvements
 
 Altough there are probably better tools out there (hping, nmap, etc), this is still a quick and handy tool used by smokeping, so every improvement / fork / pull request is more than welcome.
-Richard linked to the GPL licence which was GPLv2 at the time of the script being written, but now the link points to GPLv3 so I guess we're good with the current GPL version.
+
+Originally, Richard linked to the GPLv2 licence.
+Having talked with him, he did allow to update to GPLv3, so this script is GPLv3.
