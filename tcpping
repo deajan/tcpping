@@ -27,10 +27,12 @@
 #                 removed elder options (-l, -p which is defined as ending optional argument)
 #                 multiple small improvements (local variables, better readability)
 #                 courtesy of Orsiris de Jong <ozy@netpower.fr>
-# 2018/05/09 v2.1-dev
-#                 added preflight checks for traceroute and bc binaries
+# 2018/07/11 v2.1 added preflight checks for traceroute and bc binaries
+#                 comparaisons are now strict postix, thanks to https://github.com/agail
 
-ver="v2.0"
+# TODO: Add -P in order to choose between TCP / ICMP (linux) and TCP / UDP / ICMP (BSD*), should default to TCP
+
+ver="v2.&"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
@@ -122,7 +124,7 @@ getLocalOS() {
 		LOCAL_OS="BusyBox"
 		;;
 		*)
-		if [ "$IGNORE_OS_TYPE" == "yes" ]; then
+		if [ "$IGNORE_OS_TYPE" = "yes" ]; then
 			echo "Running on unknown local OS [$localOsVar]."
 			exit 1
 		fi
@@ -160,7 +162,7 @@ _checkSite() {
 	local traceRouteCommand=
 
 	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
-	if [ $_DEBUG == true ]; then
+	if [ $_DEBUG = true ]; then
 		echo "$traceRouteCommand"
 	fi
 
@@ -198,12 +200,12 @@ _testSite() {
 
 	# Remove first line from result
 	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
-	if [ $_DEBUG == true ]; then
+	if [ $_DEBUG = true ]; then
 		echo "$traceRouteCommand"
 	fi
 
 	# BSD traceroute outputs header line to stderr while outputting results to stdout, whereas linux versions output everything to stdout
-	if [ "$LOCAL_OS" == "BSD" ] || [ "$LOCAL_OS" == "MacOSX" ]; then
+	if [ "$LOCAL_OS" = "BSD" ] || [ "$LOCAL_OS" = "MacOSX" ]; then
 		traceRoute=`$traceRouteCommand 2>/dev/null`
 	else
 		traceRoute=`$traceRouteCommand 2>/dev/null | awk 'NR>1'`
@@ -277,7 +279,7 @@ fi
 
 getLocalOS
 
-if [ "$LOCAL_OS" == "BSD" ] || [ "$LOCAL_OS" == "MacOSX" ]; then
+if [ "$LOCAL_OS" = "BSD" ] || [ "$LOCAL_OS" = "MacOSX" ]; then
 	protoOptions="-P TCP"
 fi
 
