@@ -52,290 +52,305 @@ protoOptions="-T"
 export LANG=C
 
 usage () {
-	name=`basename $0`
-	echo "tcpping $ver Richard van den Berg <richard@vdberg.org>"
-	echo
-	echo "Usage: $name [-d] [-c] [-C] [-w sec] [-q num] [-x count] ipaddress [port]"
-	echo
-	echo "        -d            print timestamp before every result"
-	echo "        -c            print a columned result line"
-	echo "        -C            print in the same format as fping's -C option"
-	echo "        -w            wait time in seconds (defaults to 3)"
-	echo "        -r            repeat every n seconds (defaults to 1)"
-	echo "        -x            repeat n times (defaults to unlimited)"
-	echo "        -f            first ttl (defaults to 255), see traceroute man"
-	echo "        -m            max ttl (defaults to 255), see traceroute man"
-	echo "        -nNFASEisfm   see traceroute man"
-	echo "        --sport       define source port, see traceroute man"
-	echo "        -z            show what command is actually sent to traceroute (debug)"
-	echo
-	echo "Default port is 80"
-	echo "See also: man traceroute"
-	echo
+  name=`basename $0`
+  echo "tcpping $ver Richard van den Berg <richard@vdberg.org>"
+  echo
+  echo "Usage: $name [-d] [-c] [-C] [-w sec] [-q num] [-x count] ipaddress [port]"
+  echo
+  echo "        -d            print timestamp before every result"
+  echo "        -c            print a columned result line"
+  echo "        -C            print in the same format as fping's -C option"
+  echo "        -w            wait time in seconds (defaults to 3)"
+  echo "        -r            repeat every n seconds (defaults to 1)"
+  echo "        -x            repeat n times (defaults to unlimited)"
+  echo "        -f            first ttl (defaults to 255), see traceroute man"
+  echo "        -m            max ttl (defaults to 255), see traceroute man"
+  echo "        -nNFASEisfm   see traceroute man"
+  echo "        --sport       define source port, see traceroute man"
+  echo "        -z            show what command is actually sent to traceroute (debug)"
+  echo
+  echo "Default port is 80"
+  echo "See also: man traceroute"
+  echo
 }
 
 getLocalOS() {
-	local localOsVar
-	local localOsName
-	local localOsVer
+  local localOsVar
+  local localOsName
+  local localOsVer
 
-	# There is no good way to tell if currently running in BusyBox shell. Using sluggish way.
-	if ls --help 2>&1 | grep -i "BusyBox" > /dev/null; then
-		localOsVar="BusyBox"
-	else
-		# Detecting the special ubuntu userland in Windows 10 bash
-		if grep -i Microsoft /proc/sys/kernel/osrelease > /dev/null 2>&1; then
-			localOsVar="Microsoft"
-		else
-			localOsVar="$(uname -spior 2>&1)"
-			if [ $? != 0 ]; then
-				localOsVar="$(uname -v 2>&1)"
-				if [ $? != 0 ]; then
-					localOsVar="$(uname)"
-				fi
-			fi
-		fi
-	fi
+  # There is no good way to tell if currently running in BusyBox shell. Using sluggish way.
+  if ls --help 2>&1 | grep -i "BusyBox" > /dev/null; then
+    localOsVar="BusyBox"
+  else
+    # Detecting the special ubuntu userland in Windows 10 bash
+    if grep -i Microsoft /proc/sys/kernel/osrelease > /dev/null 2>&1; then
+      localOsVar="Microsoft"
+    else
+      localOsVar="$(uname -spior 2>&1)"
+      if [ $? != 0 ]; then
+        localOsVar="$(uname -v 2>&1)"
+        if [ $? != 0 ]; then
+          localOsVar="$(uname)"
+        fi
+      fi
+    fi
+  fi
 
-	case $localOsVar in
-		# Android uname contains both linux and android, keep it before linux entry
-		*"Android"*)
-		LOCAL_OS="Android"
-		;;
-		*"Linux"*)
-		LOCAL_OS="Linux"
-		;;
-		*"BSD"*)
-		LOCAL_OS="BSD"
-		;;
-		*"MINGW32"*|*"MINGW64"*|*"MSYS"*)
-		LOCAL_OS="msys"
-		;;
-		*"CYGWIN"*)
-		LOCAL_OS="Cygwin"
-		;;
-		*"Microsoft"*)
-		LOCAL_OS="WinNT10"
-		;;
-		*"Darwin"*)
-		LOCAL_OS="MacOSX"
-		;;
-		*"BusyBox"*)
-		LOCAL_OS="BusyBox"
-		;;
-		*)
-		if [ "$IGNORE_OS_TYPE" = "yes" ]; then
-			echo "Running on unknown local OS [$localOsVar]."
-			exit 1
-		fi
-		;;
-	esac
+  case $localOsVar in
+    # Android uname contains both linux and android, keep it before linux entry
+    *"Android"*)
+    LOCAL_OS="Android"
+    ;;
+    *"Linux"*)
+    LOCAL_OS="Linux"
+    ;;
+    *"BSD"*)
+    LOCAL_OS="BSD"
+    ;;
+    *"MINGW32"*|*"MINGW64"*|*"MSYS"*)
+    LOCAL_OS="msys"
+    ;;
+    *"CYGWIN"*)
+    LOCAL_OS="Cygwin"
+    ;;
+    *"Microsoft"*)
+    LOCAL_OS="WinNT10"
+    ;;
+    *"Darwin"*)
+    LOCAL_OS="MacOSX"
+    ;;
+    *"BusyBox"*)
+    LOCAL_OS="BusyBox"
+    ;;
+    *)
+    if [ "$IGNORE_OS_TYPE" = "yes" ]; then
+      echo "Running on unknown local OS [$localOsVar]."
+      exit 1
+    fi
+    ;;
+  esac
 }
 
 checkEnvironment() {
-	if ! type traceroute > /dev/null 2>&1 ; then
-		echo "traceroute binary not found. Please install it first"
-		exit 1
-	fi
+  if ! type traceroute > /dev/null 2>&1 ; then
+    echo "traceroute binary not found. Please install it first"
+    exit 1
+  fi
 
-	if ! type bc > /dev/null 2>&1 ; then
-		echo "bc binary not found. Please install it first."
-		exit 1
-	fi
+  if ! type bc > /dev/null 2>&1 ; then
+    echo "bc binary not found. Please install it first."
+    exit 1
+  fi
 }
 
 # Check if site can be reached via TCP SYN
 _checkSite() {
-	local host="${1}"
-	local port="${2:-80}"
+  local host="${1}"
+  local port="${2:-80}"
 
-	local args=
-	local i=1
-	for givenArgs in "${@}"; do
-		if [ $i -gt 2 ]; then
-			args="$args $givenArgs"
-		fi
-		i=`expr $i + 1`
-	done
+  local args=
+  local i=1
+  for givenArgs in "${@}"; do
+    if [ $i -gt 2 ]; then
+      args="$args $givenArgs"
+    fi
+    i=`expr $i + 1`
+  done
 
-	local traceRoute=
-	local traceRouteCommand=
+  local traceRoute=
+  local traceRouteCommand=
 
-	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
-	if [ $_DEBUG = true ]; then
-		echo "$traceRouteCommand"
-	fi
+  traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
+  if [ $_DEBUG = true ]; then
+    echo >&2 "$traceRouteCommand"
+  fi
 
-	traceRoute=`$traceRouteCommand 2>&1`
+  if $traceRouteCommand >/dev/null 2>&1; then
+    traceRoute=`$traceRouteCommand 2>&1`
+  else
+    if [ "$(id -u)" -ne 0 ]; then
+      echo >&2 "Unable to run 'traceroute' command. Please try run 'sudo $0'"
+      return 20
+    else
+      echo >&2 "Unable to run 'traceroute' command. Please submit an issue in 'https://github.com/deajan/tcpping/issues'"
+      return 21
+    fi
+  fi
 
-	if echo "${traceRoute}" | egrep -i "(bad destination|got roo|not known|cannot handle)" >/dev/null 2>&1; then
-		echo "${traceRoute}"
-		exit 1
-	fi
+  if echo "${traceRoute}" | egrep -i "(bad destination|got roo|not known|cannot handle)" >/dev/null 2>&1; then
+    echo >&2 "${traceRoute}"
+    return 22
+  fi
 }
 
 # Measure latency via TCP SYN
 _testSite() {
-	local host="${1}"
-	local port="${2:-80}"
-	local myseq="${3}"
+  local host="${1}"
+  local port="${2:-80}"
+  local myseq="${3}"
 
-	local args=
-	local i=1
-	for givenArgs in "${@}"; do
-		if [ $i -gt 3 ]; then
-			args="$args $givenArgs"
-		fi
-		i=`expr $i + 1`
-	done
+  local args=
+  local i=1
+  for givenArgs in "${@}"; do
+    if [ $i -gt 3 ]; then
+      args="$args $givenArgs"
+    fi
+    i=`expr $i + 1`
+  done
 
-	local traceRoute=
-	local traceRouteCommand=
-	local foundHost=
-	local rtt=
+  local traceRoute=
+  local traceRouteCommand=
+  local foundHost=
+  local rtt=
 
-	shift
-	[ "${c}" = "yes" ] && nows=`date +${format}`
-	[ "${d}" = "yes" ] && nowd=`date`
+  shift
+  [ "${c}" = "yes" ] && nows=`date +${format}`
+  [ "${d}" = "yes" ] && nowd=`date`
 
-	# Remove first line from result
-	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
-	if [ $_DEBUG = true ]; then
-		echo "$traceRouteCommand"
-	fi
+  # Remove first line from result
+  traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
+  if [ $_DEBUG = true ]; then
+    echo "$traceRouteCommand"
+  fi
 
-	# BSD traceroute outputs header line to stderr while outputting results to stdout, whereas linux versions output everything to stdout
-	if [ "$LOCAL_OS" = "BSD" ] || [ "$LOCAL_OS" = "MacOSX" ]; then
-		traceRoute=`$traceRouteCommand 2>/dev/null`
-	else
-		traceRoute=`$traceRouteCommand 2>/dev/null | awk 'NR>1'`
-	fi
+  # BSD traceroute outputs header line to stderr while outputting results to stdout, whereas linux versions output everything to stdout
+  if [ "$LOCAL_OS" = "BSD" ] || [ "$LOCAL_OS" = "MacOSX" ]; then
+    traceRoute=`$traceRouteCommand 2>/dev/null`
+  else
+    traceRoute=`$traceRouteCommand 2>/dev/null | awk 'NR>1'`
+  fi
 
-	# Smokeping does not like double output (fqdn + ip), so we leave host as given by smokeping
-	#foundHost=`echo "${traceRoute}" | awk '{print $2" "$3}'`
-	#
-	#if [ "$foundHost" != "" ] && [ "$foundHost" != "* " ]; then
-	#	host="$foundHost"
-	#fi
+  # Smokeping does not like double output (fqdn + ip), so we leave host as given by smokeping
+  #foundHost=`echo "${traceRoute}" | awk '{print $2" "$3}'`
+  #
+  #if [ "$foundHost" != "" ] && [ "$foundHost" != "* " ]; then
+  # host="$foundHost"
+  #fi
 
-	rtt=`echo "${traceRoute}" | awk '{print $4}'`
-	not=`echo "${rtt}" | tr -d ".0123456789"`
+  rtt=`echo "${traceRoute}" | awk '{print $4}'`
+  not=`echo "${rtt}" | tr -d ".0123456789"`
 
-	[ "${d}" = "yes" ] && echo "$nowd"
-	if [ "${c}" = "yes" ]; then
-		if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
-			echo "$myseq $nows $rtt $host"
-		else
-			echo "$myseq $nows $max $host"
-		fi
-	elif [ "${C}" = "yes" ]; then
-		if [ "$myseq" = "0" ]; then
-			echo -n "$host :"
-		fi
-		if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
-			if [ $rtt != "255" ]; then
-				echo -n " $rtt"
-			else
-				echo -n " -"
-			fi
-		else
-			echo -n " -"
-		fi
-		if [ "$x" = "1" ]; then
-			echo
-		fi
-	else
-		echo "${traceRoute}" | sed -e "s/^.*\*.*$/seq $myseq: no response (timeout)/" -e "s/^$ttl /seq $myseq: tcp response from/"
-	fi
+  [ "${d}" = "yes" ] && echo "$nowd"
+  if [ "${c}" = "yes" ]; then
+    if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
+      echo "$myseq $nows $rtt $host"
+    else
+      echo "$myseq $nows $max $host"
+    fi
+  elif [ "${C}" = "yes" ]; then
+    if [ "$myseq" = "0" ]; then
+      echo -n "$host :"
+    fi
+    if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
+      if [ $rtt != "255" ]; then
+        echo -n " $rtt"
+      else
+        echo -n " -"
+      fi
+    else
+      echo -n " -"
+    fi
+    if [ "$x" = "1" ]; then
+      echo
+    fi
+  else
+    echo "${traceRoute}" | sed -e "s/^.*\*.*$/seq $myseq: no response (timeout)/" -e "s/^$ttl /seq $myseq: tcp response from/"
+  fi
 }
 
 checkEnvironment
 
 while getopts dhzq:w:cr:nNFSAEi:f:l:m:p:s:x:C opt ; do
-	case "$opt" in
-		d|c|C) eval $opt="yes" ;;
-		q|w|r|x) eval $opt="$OPTARG" ;;
-		n|N|F|S|A|E) topt="$topt -$opt" ;;
-		i|s) topt="$topt -$opt $OPTARG" ;;
-		f) f_ttl="$OPTARG" ;;
-		m) m_ttl="$OPTARG" ;;
-		z) _DEBUG=true ;;
-		?) usage; exit ;;
-	esac
+  case "$opt" in
+    d|c|C) eval $opt="yes" ;;
+    q|w|r|x) eval $opt="$OPTARG" ;;
+    n|N|F|S|A|E) topt="$topt -$opt" ;;
+    i|s) topt="$topt -$opt $OPTARG" ;;
+    f) f_ttl="$OPTARG" ;;
+    m) m_ttl="$OPTARG" ;;
+    z) _DEBUG=true ;;
+    ?) usage; exit ;;
+  esac
 done
 
 shift `expr $OPTIND - 1`
 
 if [ "x$1" = "x" ]; then
-	usage
-	exit
+  usage
+  exit
 fi
 
 max=`echo "${timeToWait} * 1000" | bc`
 
 if [ `date +%s` != "%s" ]; then
-	format="%s"
+  format="%s"
 fi
 
 getLocalOS
 
 if [ "$LOCAL_OS" = "BSD" ] || [ "$LOCAL_OS" = "MacOSX" ]; then
-	protoOptions="-P TCP"
+  protoOptions="-P TCP"
 fi
 
 i=1
 for args in "${@}"; do
-	if [ $i -eq $# ]; then
-		lastArg=$args
-	elif [ $i -eq `expr $# - 1` ]; then
-		beforeLastArg=$args
-	fi
-	i=`expr $i + 1`
+  if [ $i -eq $# ]; then
+    lastArg=$args
+  elif [ $i -eq `expr $# - 1` ]; then
+    beforeLastArg=$args
+  fi
+  i=`expr $i + 1`
 done
 
 case $lastArg in
-	''|*[!0-9]*)
-	# Last argument is not numeric, assuming it's an FQDN or IP
-	host=$lastArg
-	;;
-	*)
-	# Last argument is numeric, assuming it's a port number
-	host=$beforeLastArg
-	port=$lastArg
-	;;
+  ''|*[!0-9]*)
+  # Last argument is not numeric, assuming it's an FQDN or IP
+  host=$lastArg
+  ;;
+  *)
+  # Last argument is numeric, assuming it's a port number
+  host=$beforeLastArg
+  port=$lastArg
+  ;;
 esac
 
 _checkSite "${host}" "${port}" ${topt}
+err=$?
+
+[ ${err} -gt 0 ] && exit ${err}
 
 if [ "$x" = "" ]; then
-	while [ true ] ; do
-		_testSite "${host}" "${port}" ${seq} ${topt} &
-		pid=$!
-		if [ "${C}" = "yes" ]; then
-			wait $pid
-		fi
-		seq=`expr $seq + 1`
-		if [ $seq -gt 0 ]; then
-			_DEBUG=false
-		fi
-		sleep ${repeatWaitTime}
-	done
+  while [ true ] ; do
+    _testSite "${host}" "${port}" ${seq} ${topt} &
+    pid=$!
+
+    if [ "${C}" = "yes" ]; then
+      wait $pid
+    fi
+    seq=`expr $seq + 1`
+    if [ $seq -gt 0 ]; then
+      _DEBUG=false
+    fi
+    sleep ${repeatWaitTime}
+  done
 else
-	while [ "$x" -gt 0 ] ; do
-		_testSite "${host}" "${port}" ${seq} ${topt} &
-		pid=$!
-		if [ "${C}" = "yes" ]; then
-			wait $pid
-		fi
-		seq=`expr $seq + 1`
-		if [ $seq -gt 0 ]; then
-			_DEBUG=false
-		fi
-		x=`expr $x - 1`
-		if [ "$x" -gt 0 ]; then
-			sleep ${repeatWaitTime}
-		fi
-	done
+  while [ "$x" -gt 0 ] ; do
+    _testSite "${host}" "${port}" ${seq} ${topt} &
+    pid=$!
+
+    if [ "${C}" = "yes" ]; then
+      wait $pid
+    fi
+    seq=`expr $seq + 1`
+    if [ $seq -gt 0 ]; then
+      _DEBUG=false
+    fi
+    x=`expr $x - 1`
+    if [ "$x" -gt 0 ]; then
+      sleep ${repeatWaitTime}
+    fi
+  done
 fi
 
 exit
