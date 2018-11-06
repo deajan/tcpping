@@ -21,6 +21,14 @@ Example command smokeping would use
 
 `tcpping -C -x 5 myhost 80`
 
+## Root privileges
+
+By default, traceroute needs root privileges.
+You may launch script with sudo or with '-Z' in order to ask for root privileges during execution.
+By doing so, you may edit your sudoers file by allowing user 'bob' to run traceroute as root without password
+```
+bob ALL=(ALL) NOPASSWD: /usr/bin/traceroute
+```
 
 ## Licence and improvements
 
