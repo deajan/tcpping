@@ -1,13 +1,15 @@
 #!/bin/sh
 #
 # tcpping: test response times using TCP SYN packets
-#          URL: http://www.vdberg.org/~richard/tcpping.html
+#          URL: https://github.com/deajan/tcpping
+#          Former URL: http://www.vdberg.org/~richard/tcpping.html
 #
 # uses recent versions of traceroute supporting TCP sessions
 #
-# (c) 2002-2005 Richard van den Berg <richard@vdberg.org> under the GPL
+# (c) 2002-2018 Richard van den Berg <richard@vdberg.org> under the GPL
 #               http://www.gnu.org/copyleft/gpl.html
-#
+#               Orsiris de Jong <ozy@netpower.fr>
+# 
 # 2002/12/20 v1.0 initial version
 # 2003/01/25 v1.1 added -c and -r options
 #                 now accepting all other tcptraceroute options
@@ -29,10 +31,13 @@
 #                 courtesy of Orsiris de Jong <ozy@netpower.fr>
 # 2018/07/11 v2.1 added preflight checks for traceroute and bc binaries
 #                 comparaisons are now strict postix, thanks to https://github.com/agail
+# 2018/11/06 v2.2 added checks for root privileges, courtesy of Jim Conner <jimconn91343@gmail.com>
+#                 added -Z parameter for sudo, courtesy of Orsiris de Jong <ozy@netpower.fr>
+#                 added -M parameter for protocol, courtesy of Orsiris de Jong <ozy@netpower.fr>
 
 # TODO: Add -P in order to choose between TCP / ICMP (linux) and TCP / UDP / ICMP (BSD*), should default to TCP
 
-ver="v2.1"
+ver="v2.2-dev"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
@@ -44,16 +49,20 @@ numberOfQueries=1
 repeatWaitTime=1
 timeToWait=3
 topts=""
+SUDO_COMMAND=""
 _DEBUG=false
 LOCAL_OS=
+METHOD=tcp
+#WIP remove
 protoOptions="-T"
+proto=tcp
 
 # Make sure traceroute output is language agnostic
 export LANG=C
 
 usage () {
 	name=`basename $0`
-	echo "tcpping $ver Richard van den Berg <richard@vdberg.org>"
+	echo "tcpping $ver Richard van den Berg <richard@vdberg.org>, Orsiris de Jong <ozy@netpower.fr>"
 	echo
 	echo "Usage: $name [-d] [-c] [-C] [-w sec] [-q num] [-x count] ipaddress [port]"
 	echo
@@ -66,8 +75,10 @@ usage () {
 	echo "        -f            first ttl (defaults to 255), see traceroute man"
 	echo "        -m            max ttl (defaults to 255), see traceroute man"
 	echo "        -nNFASEisfm   see traceroute man"
+	echo "        -M            method (tcp, udp, icmp...), see traceroute man"
 	echo "        --sport       define source port, see traceroute man"
 	echo "        -z            show what command is actually sent to traceroute (debug)"
+	echo "        -Z            run traceroute with sudo"
 	echo
 	echo "Default port is 80"
 	echo "See also: man traceroute"
@@ -124,22 +135,19 @@ getLocalOS() {
 		LOCAL_OS="BusyBox"
 		;;
 		*)
-		if [ "$IGNORE_OS_TYPE" = "yes" ]; then
-			echo "Running on unknown local OS [$localOsVar]."
-			exit 1
-		fi
+		echo >&2 "Running on unknown local OS [$localOsVar]."
 		;;
 	esac
 }
 
 checkEnvironment() {
 	if ! type traceroute > /dev/null 2>&1 ; then
-		echo "traceroute binary not found. Please install it first"
+		echo >&2 "traceroute binary not found. Please install it first"
 		exit 1
 	fi
 
 	if ! type bc > /dev/null 2>&1 ; then
-		echo "bc binary not found. Please install it first."
+		echo >&2 "bc binary not found. Please install it first."
 		exit 1
 	fi
 }
@@ -161,19 +169,18 @@ _checkSite() {
 	local traceRoute=
 	local traceRouteCommand=
 
-	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
+	traceRouteCommand="$SUDO_COMMAND traceroute ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
 	if [ $_DEBUG = true ]; then
 		echo >&2 "$traceRouteCommand"
 	fi
 
-	if $traceRouteCommand >/dev/null 2>&1; then
-		traceRoute=`$traceRouteCommand 2>&1`
-	else
+	traceRoute=`$traceRouteCommand 2>&1`
+	if [ $? -ne 0 ]; then
 		if [ "$(id -u)" -ne 0 ]; then
-			echo >&2 "Unable to run 'traceroute' command. Please try run 'sudo $0'"
+			echo >&2 "Unable to run '$traceRouteCommand' command. Please try run $0 with -s parameter or 'sudo $0'"
 			return 20
 		else
-			echo >&2 "Unable to run 'traceroute' command. Please submit an issue in 'https://github.com/deajan/tcpping/issues'"
+			echo >&2 "Unable to run '$traceRouteCommand' command. Please submit an issue in 'https://github.com/deajan/tcpping/issues'"
 			return 21
 		fi
 	fi
@@ -209,7 +216,7 @@ _testSite() {
 	[ "${d}" = "yes" ] && nowd=`date`
 
 	# Remove first line from result
-	traceRouteCommand="traceroute ${protoOptions} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
+	traceRouteCommand="$SUDO_COMMAND traceroute ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
 	if [ $_DEBUG = true ]; then
 		echo "$traceRouteCommand"
 	fi
@@ -261,7 +268,7 @@ _testSite() {
 
 checkEnvironment
 
-while getopts dhzq:w:cr:nNFSAEi:f:l:m:p:s:x:C opt ; do
+while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM: opt ; do
 	case "$opt" in
 		d|c|C) eval $opt="yes" ;;
 		q|w|r|x) eval $opt="$OPTARG" ;;
@@ -269,10 +276,22 @@ while getopts dhzq:w:cr:nNFSAEi:f:l:m:p:s:x:C opt ; do
 		i|s) topt="$topt -$opt $OPTARG" ;;
 		f) f_ttl="$OPTARG" ;;
 		m) m_ttl="$OPTARG" ;;
+		M) METHOD="$OPTARG"
+		case "$METHOD" in
+			icmp) ;;
+			tcp) ;;
+			udp) ;;
+			*) 
+			echo >&2 "Unsupported method. Falling back to TCP"
+			METHOD=tcp
+			;;
+		esac ;;
+		Z) SUDO_COMMAND=sudo ;;
 		z) _DEBUG=true ;;
 		?) usage; exit ;;
 	esac
 done
+
 
 shift `expr $OPTIND - 1`
 
@@ -289,8 +308,11 @@ fi
 
 getLocalOS
 
+#WIP check here
 if [ "$LOCAL_OS" = "BSD" ] || [ "$LOCAL_OS" = "MacOSX" ]; then
-	protoOptions="-P TCP"
+	METHOD_PARAMETER="-P"
+else
+	METHOD_PARAMETER="-M"
 fi
 
 i=1
