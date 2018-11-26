@@ -20,6 +20,7 @@
 # 2007/01/19 v1.6 catch non-root tcptraceroute
 # 2008/02/10 v1.7 make -C work when reverse lookup fails, courtesy of Fabrice Le Dorze <Fabrice.LeDorze@apx.fr>
 # 2010/06/04 v1.8 make -C work when ipaddress doesn't reply, courtesy of Yann Beulque
+# From v2.0 upwards, maintainer is Orsiris de Jong <ozy@netpower.fr>
 # 2018/04/25 v2.0 make tcpping work with recent traceroute binary (tested with version 2.0.22)
 #                 added language agonstic traceroute support
 #                 added FreeBSD 11 traceroute and csh support
@@ -28,16 +29,17 @@
 #                 drop tcptraceroute prerequisite
 #                 removed elder options (-l, -p which is defined as ending optional argument)
 #                 multiple small improvements (local variables, better readability)
-#                 courtesy of Orsiris de Jong <ozy@netpower.fr>
 # 2018/07/11 v2.1 added preflight checks for traceroute and bc binaries
 #                 comparaisons are now strict postix, thanks to https://github.com/agail
-# 2018/11/06 v2.2 added checks for root privileges, courtesy of Jim Conner <jimconn91343@gmail.com>
-#                 added -Z parameter for sudo, courtesy of Orsiris de Jong <ozy@netpower.fr>
-#                 added -M parameter for protocol, courtesy of Orsiris de Jong <ozy@netpower.fr>
+# 2018/11/26 v2.2 added checks for root privileges, courtesy of Jim Conner <jimconn91343@gmail.com>
+#                 added -Z parameter for sudo
+#                 added -M parameter for protocol
+#                 removed bc dependancy
+#                 fixed bogus -w parameter 
 
 # TODO: Add -P in order to choose between TCP / ICMP (linux) and TCP / UDP / ICMP (BSD*), should default to TCP
 
-ver="v2.2-dev"
+ver="v2.2"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
@@ -143,11 +145,6 @@ getLocalOS() {
 checkEnvironment() {
 	if ! type traceroute > /dev/null 2>&1 ; then
 		echo >&2 "traceroute binary not found. Please install it first"
-		exit 1
-	fi
-
-	if ! type bc > /dev/null 2>&1 ; then
-		echo >&2 "bc binary not found. Please install it first."
 		exit 1
 	fi
 }
@@ -271,9 +268,10 @@ checkEnvironment
 while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM: opt ; do
 	case "$opt" in
 		d|c|C) eval $opt="yes" ;;
-		q|w|r|x) eval $opt="$OPTARG" ;;
+		q|r|x) eval $opt="$OPTARG" ;;
 		n|N|F|S|A|E) topt="$topt -$opt" ;;
 		i|s) topt="$topt -$opt $OPTARG" ;;
+		w) timeToWait="$OPTARG" ;;
 		f) f_ttl="$OPTARG" ;;
 		m) m_ttl="$OPTARG" ;;
 		M) METHOD="$OPTARG"
@@ -300,7 +298,7 @@ if [ "x$1" = "x" ]; then
 	exit
 fi
 
-max=`echo "${timeToWait} * 1000" | bc`
+max=$((${timeToWait} * 1000))
 
 if [ `date +%s` != "%s" ]; then
 	format="%s"
