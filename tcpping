@@ -37,8 +37,6 @@
 #                 removed bc dependancy
 #                 fixed bogus -w parameter 
 
-# TODO: Add -P in order to choose between TCP / ICMP (linux) and TCP / UDP / ICMP (BSD*), should default to TCP
-
 ver="v2.2"
 format="%Y%m%d%H%M%S"
 d="no"
