@@ -38,6 +38,7 @@
 #                 fixed bogus -w parameter 
 # 2019/09/25 v2.3 allow -w parameter to take floats
 #                 added -o parameter, which outputs statistics similar to ping
+#                 Simpify main loop
 
 ver="v2.3"
 format="%Y%m%d%H%M%S"
@@ -367,58 +368,35 @@ err=$?
 pingCount=0
 pingFailCount=0
 if [ "$x" = "" ]; then
-	while [ true ] ; do
-		result=""
-		_testSite "${host}" "${port}" ${seq} ${topt} &
-		pid=$!
-
-		if [ "${C}" = "yes" ]; then
-			wait $pid
-			result=$?
-		fi
-		seq=`expr $seq + 1`
-		if [ $seq -gt 0 ]; then
-			_DEBUG=false
-		fi
-		sleep ${repeatWaitTime}
-		if [ "$result" == "" ]; then
-			wait $pid > /dev/null 2>&1
-			result=$?
-		fi
-		
-		pingCount=$((pingCount+1))
-		if [ $result -ne 0 ]; then
-			pingFailCount=$((pingFailCount+1))
-		fi
-	done
-else
-	while [ "$x" -gt 0 ] ; do
-		result=""
-		_testSite "${host}" "${port}" ${seq} ${topt} &
-		pid=$!
-
-		if [ "${C}" = "yes" ]; then
-			wait $pid
-			result=$?
-		fi
-		seq=`expr $seq + 1`
-		if [ $seq -gt 0 ]; then
-			_DEBUG=false
-		fi
-		x=`expr $x - 1`
-		if [ "$x" -gt 0 ]; then
-			sleep ${repeatWaitTime}
-		fi
-				if [ "$result" == "" ]; then
-			wait $pid > /dev/null 2>&1
-			result=$?
-		fi
-		
-		pingCount=$((pingCount+1))
-		if [ $result -ne 0 ]; then
-			pingFailCount=$((pingFailCount+1))
-		fi
-	done
+        x=-1
 fi
+
+while [ "$x" -gt 0 ] || [ "$x" -le -1 ]; do
+	result=""
+	_testSite "${host}" "${port}" ${seq} ${topt} &
+	pid=$!
+
+	if [ "${C}" = "yes" ]; then
+		wait $pid
+		result=$?
+	fi
+	seq=`expr $seq + 1`
+	if [ $seq -gt 0 ]; then
+		_DEBUG=false
+	fi
+	x=`expr $x - 1`
+	if [ "$x" -gt 0 ] || [ "$x" -le -1 ]; then
+		sleep ${repeatWaitTime}
+	fi
+	if [ "$result" == "" ]; then
+		wait $pid > /dev/null 2>&1
+		result=$?
+	fi
+
+	pingCount=$((pingCount+1))
+	if [ $result -ne 0 ]; then
+		pingFailCount=$((pingFailCount+1))
+	fi
+done
 
 exit
