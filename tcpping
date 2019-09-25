@@ -40,6 +40,8 @@
 #                 added -o parameter, which outputs statistics similar to ping
 #                 Simpify main loop
 
+# TODO            Simplify code, improve variable names, uniform `expr ` and $(( )) statements
+
 ver="v2.3"
 format="%Y%m%d%H%M%S"
 d="no"
