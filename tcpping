@@ -36,8 +36,10 @@
 #                 added -M parameter for protocol
 #                 removed bc dependancy
 #                 fixed bogus -w parameter 
+# 2019/09/25 v2.3 allow -w parameter to take floats
+#                 added -o parameter, which outputs statistics similar to ping
 
-ver="v2.2"
+ver="v2.3"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
@@ -56,6 +58,7 @@ METHOD=tcp
 #WIP remove
 protoOptions="-T"
 proto=tcp
+summary="no"
 
 # Make sure traceroute output is language agnostic
 export LANG=C
@@ -79,6 +82,7 @@ usage () {
 	echo "        --sport       define source port, see traceroute man"
 	echo "        -z            show what command is actually sent to traceroute (debug)"
 	echo "        -Z            run traceroute with sudo"
+	echo "        -o            Output ping like statistics"
 	echo
 	echo "Default port is 80"
 	echo "See also: man traceroute"
@@ -259,6 +263,18 @@ _testSite() {
 	else
 		echo "${traceRoute}" | sed -e "s/^.*\*.*$/seq $myseq: no response (timeout)/" -e "s/^$ttl /seq $myseq: tcp response from/"
 	fi
+	
+	if [ "`echo "${traceRoute}" | awk '{print $1}'`" == "*" ]; then
+                return 1
+        else
+                return 0
+        fi
+}
+
+_quit() {
+        echo ""
+        echo "${pingCount} packets transmitted, ${failureCount} received."
+        exit
 }
 
 checkEnvironment
@@ -284,6 +300,7 @@ while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM: opt ; do
 		esac ;;
 		Z) SUDO_COMMAND=sudo ;;
 		z) _DEBUG=true ;;
+		o) summary="yes" ;;
 		?) usage; exit ;;
 	esac
 done
@@ -296,7 +313,14 @@ if [ "x$1" = "x" ]; then
 	exit
 fi
 
-max=$((${timeToWait} * 1000))
+trap _quit SIGQUIT
+
+# Check if timeToWait is float, if yes, use maybe less portable awk version
+if [ "${timeToWait}" != "${timeToWait/./}" ]; then
+        max=$(awk 'BEGIN{printf "%.2f\n", ('${timeToWait}'*1000)}')
+else
+        max=$((${timeToWait} * 1000))
+fi
 
 if [ `date +%s` != "%s" ]; then
 	format="%s"
@@ -338,27 +362,42 @@ err=$?
 
 [ ${err} -gt 0 ] && exit ${err}
 
+pingCount=0
+pingFailCount=0
 if [ "$x" = "" ]; then
 	while [ true ] ; do
+		result=""
 		_testSite "${host}" "${port}" ${seq} ${topt} &
 		pid=$!
 
 		if [ "${C}" = "yes" ]; then
 			wait $pid
+			result=$?
 		fi
 		seq=`expr $seq + 1`
 		if [ $seq -gt 0 ]; then
 			_DEBUG=false
 		fi
 		sleep ${repeatWaitTime}
+		if [ "$result" == "" ]; then
+			wait $pid > /dev/null 2>&1
+			result=$?
+		fi
+		
+		pingCount=$((pingCount+1))
+		if [ $result -ne 0 ]; then
+			pingFailCount=$((pingFailCount+1))
+		fi
 	done
 else
 	while [ "$x" -gt 0 ] ; do
+		result=""
 		_testSite "${host}" "${port}" ${seq} ${topt} &
 		pid=$!
 
 		if [ "${C}" = "yes" ]; then
 			wait $pid
+			result=$?
 		fi
 		seq=`expr $seq + 1`
 		if [ $seq -gt 0 ]; then
@@ -367,6 +406,15 @@ else
 		x=`expr $x - 1`
 		if [ "$x" -gt 0 ]; then
 			sleep ${repeatWaitTime}
+		fi
+				if [ "$result" == "" ]; then
+			wait $pid > /dev/null 2>&1
+			result=$?
+		fi
+		
+		pingCount=$((pingCount+1))
+		if [ $result -ne 0 ]; then
+			pingFailCount=$((pingFailCount+1))
 		fi
 	done
 fi
