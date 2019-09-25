@@ -273,13 +273,13 @@ _testSite() {
 
 _quit() {
         echo ""
-        echo "${pingCount} packets transmitted, ${failureCount} received."
+        echo "${pingCount} packets transmitted, ${pingFailCount} received."
         exit
 }
 
 checkEnvironment
 
-while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM: opt ; do
+while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM:o opt ; do
 	case "$opt" in
 		d|c|C) eval $opt="yes" ;;
 		q|r|x) eval $opt="$OPTARG" ;;
@@ -313,7 +313,9 @@ if [ "x$1" = "x" ]; then
 	exit
 fi
 
-trap _quit SIGQUIT
+if [ "${summary}" == "yes" ]; then
+	trap _quit SIGQUIT EXIT
+fi
 
 # Check if timeToWait is float, if yes, use maybe less portable awk version
 if [ "${timeToWait}" != "${timeToWait/./}" ]; then
