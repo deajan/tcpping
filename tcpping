@@ -270,11 +270,8 @@ _testSite() {
 		echo "${traceRoute}" | sed -e "s/^.*\*.*$/seq $myseq: no response (timeout)/" -e "s/^$ttl /seq $myseq: tcp response from/"
 	fi
 
-	if [ "`echo "${traceRoute}" | awk '{print $1}'`" = "*" ]; then
-                return 1
-        else
-                return 0
-        fi
+	echo "${traceRoute}" | awk '($1 == "*" || $2 == "*"){ exit 1 }'
+	return $?
 }
 
 _quit() {
