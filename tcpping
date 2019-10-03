@@ -58,9 +58,6 @@ SUDO_COMMAND=""
 _DEBUG=false
 LOCAL_OS=
 METHOD=tcp
-#WIP remove
-protoOptions="-T"
-proto=tcp
 summary="no"
 x=0
 
@@ -251,7 +248,7 @@ _testSite() {
 		if [ "x${rtt}" != "x" -a "x${not}" = "x" ]; then
 			echo "$myseq $nows $rtt $host"
 		else
-			echo "$myseq $nows $max $host"
+			echo "$myseq $nows $maxRtt $host"
 		fi
 	elif [ "${C}" = "yes" ]; then
 		if [ "$myseq" = "0" ]; then
@@ -327,7 +324,7 @@ if [ "${summary}" = "yes" ]; then
 fi
 
 # Use awk to multiply possible float in timeToWait
-max=`awk 'BEGIN{printf "%.2f\n", ('${timeToWait}'*1000)}'`
+maxRtt=`awk 'BEGIN{printf "%.2f\n", ('${timeToWait}'*1000)}'`
 
 if [ `date +%s` != "%s" ]; then
 	format="%s"
