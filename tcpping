@@ -73,7 +73,7 @@ usage () {
 	echo "        -d            print timestamp before every result"
 	echo "        -c            print a columned result line"
 	echo "        -C            print in the same format as fping's -C option"
-	echo "        -w            wait time in seconds (defaults to 3)"
+	echo "        -w            wait time in seconds (defaults to 3). Linux supports float values, ie '.2'"
 	echo "        -r            repeat every n seconds (defaults to 1)"
 	echo "        -x            repeat n times (defaults to unlimited)"
 	echo "        -f            first ttl (defaults to 255), see traceroute man"
