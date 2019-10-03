@@ -276,7 +276,7 @@ _testSite() {
 
 _quit() {
         echo ""
-        echo "${pingCount} packets transmitted, ${pingFailCount} received."
+        echo "${pingCount} packets transmitted, `expr ${pingCount} - ${pingFailCount}` received."
         exit
 }
 
