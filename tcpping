@@ -320,7 +320,7 @@ if [ "x$1" = "x" ]; then
 fi
 
 if [ "${summary}" = "yes" ]; then
-	trap _quit SIGQUIT EXIT
+	trap _quit SIGQUIT INT
 fi
 
 # Use awk to multiply possible float in timeToWait
@@ -399,5 +399,7 @@ while [ $pingCount -lt $x ] || [ $x -eq 0 ]; do
 		sleep ${repeatWaitTime}
 	fi
 done
-
+if [ "$summary" = "yes" ]; then
+	_quit
+fi
 exit
