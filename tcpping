@@ -365,6 +365,11 @@ err=$?
 
 [ ${err} -gt 0 ] && exit ${err}
 
+# if timeToWait is lower than repeatWaitTime (1 sec), repeatWaitTime should be equal to timeToWait in order to speed up pings after timeout
+if ! awk 'BEGIN { exit "'$repeatWaitTime'">"'$timeToWait'" }'; then
+	repeatWaitTime=$timeToWait
+fi
+
 pingCount=0
 pingFailCount=0
 
