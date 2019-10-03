@@ -6,7 +6,7 @@
 #
 # uses recent versions of traceroute supporting TCP sessions
 #
-# (c) 2002-2018 Richard van den Berg <richard@vdberg.org> under the GPL
+# (c) 2002-2019 Richard van den Berg <richard@vdberg.org> under the GPL
 #               http://www.gnu.org/copyleft/gpl.html
 #               Orsiris de Jong <ozy@netpower.fr>
 # 
@@ -150,7 +150,7 @@ checkEnvironment() {
 		echo >&2 "traceroute binary not found. Please install it first"
 		exit 1
 	fi
-	
+
 	if ! type awk > /dev/null; then
 		echo >&2 "awk binary not found. Please install it first"
 		exit 2
@@ -269,7 +269,7 @@ _testSite() {
 	else
 		echo "${traceRoute}" | sed -e "s/^.*\*.*$/seq $myseq: no response (timeout)/" -e "s/^$ttl /seq $myseq: tcp response from/"
 	fi
-	
+
 	if [ "`echo "${traceRoute}" | awk '{print $1}'`" = "*" ]; then
                 return 1
         else
@@ -299,7 +299,7 @@ while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM:o opt ; do
 			icmp) ;;
 			tcp) ;;
 			udp) ;;
-			*) 
+			*)
 			echo >&2 "Unsupported method. Falling back to TCP"
 			METHOD=tcp
 			;;
