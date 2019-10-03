@@ -27,6 +27,8 @@ Example command for sub second tcp ping analysis on Linux
 
 `tcpping -x 10 -w .1 -o myhost 443`
 
+Keep in mind that the tcp / udp probe checks for a SYN flag, which does not mean that a service is listening on the target machine port.
+
 ## Root privileges
 
 By default, traceroute needs root privileges.
