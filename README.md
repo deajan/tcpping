@@ -23,6 +23,10 @@ Example command smokeping would use
 
 `tcpping -C -x 5 myhost 80`
 
+Example command for sub second tcp ping analysis on Linux
+
+`tcpping -x 10 -w .1 -o myhost 443`
+
 ## Root privileges
 
 By default, traceroute needs root privileges.
