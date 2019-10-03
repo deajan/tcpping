@@ -8,9 +8,9 @@ Usage is the same and should work out of the box for smokeping.
 It comes with various improvements like language agonstic functionality, better error detection, debug, and removed tcptraceroute dependancy.
 
 So far, tests have been done with:
-- CentOS 7: v2.0-2.3 tested (with traceroute 2.0.22)
-- CentOS 8: v2.3 tested (with traceroute 2.1.0)
-- FreeBSD 11.2: v2.0-2.3 tested (with traceroute 1.4a12)
+- CentOS 7: v2.0-2.3 tested (with traceroute 2.0.22 and bash 4.2.46(2)-release)
+- CentOS 8: v2.3 tested (with traceroute 2.1.0 and bash 4.4.19(1)-release)
+- FreeBSD 11.2: v2.0-2.3 tested (with traceroute 1.4a12 and tcsh 6.20.00)
 Also, smokeping 2.7.2 and 2.7.3 have been tested.
 
 ## Installation
