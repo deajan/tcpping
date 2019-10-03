@@ -273,7 +273,7 @@ _testSite() {
 		echo "${traceRoute}" | sed -e "s/^.*\*.*$/seq $myseq: no response (timeout)/" -e "s/^$ttl /seq $myseq: tcp response from/"
 	fi
 	
-	if [ "`echo "${traceRoute}" | awk '{print $1}'`" == "*" ]; then
+	if [ "`echo "${traceRoute}" | awk '{print $1}'`" = "*" ]; then
                 return 1
         else
                 return 0
@@ -322,7 +322,7 @@ if [ "x$1" = "x" ]; then
 	exit
 fi
 
-if [ "${summary}" == "yes" ]; then
+if [ "${summary}" = "yes" ]; then
 	trap _quit SIGQUIT EXIT
 fi
 
@@ -387,7 +387,7 @@ while [ $pingCount -lt $x ] || [ $x -eq 0 ]; do
 	if [ $pingCount -lt $x ] || [ $x -eq 0 ]; then
 		sleep ${repeatWaitTime}
 	fi
-	if [ "$result" == "" ]; then
+	if [ "$result" = "" ]; then
 		wait $pid > /dev/null 2>&1
 		result=$?
 	fi
