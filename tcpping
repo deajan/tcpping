@@ -9,7 +9,7 @@
 # (c) 2002-2019 Richard van den Berg <richard@vdberg.org> under the GPL
 #               http://www.gnu.org/copyleft/gpl.html
 #               Orsiris de Jong <ozy@netpower.fr>
-# 
+#
 # 2002/12/20 v1.0 initial version
 # 2003/01/25 v1.1 added -c and -r options
 #                 now accepting all other tcptraceroute options
@@ -35,12 +35,12 @@
 #                 added -Z parameter for sudo
 #                 added -M parameter for protocol
 #                 removed bc dependancy
-#                 fixed bogus -w parameter 
-# 2019/09/25 v2.3 allow -w parameter to take floats
+#                 fixed bogus -w parameter
+# 2019/09/25 v2.3 allow -w parameter to take floats under linux
+#                 meantime between checks is now lowered if -w parameter is less than 1 second on linux
 #                 added -o parameter, which outputs statistics similar to ping
 #                 Simpify main loop
 #                 fix ambiguous output redirect in csh for preflight check
-
 
 ver="v2.3"
 format="%Y%m%d%H%M%S"
@@ -381,9 +381,6 @@ while [ $pingCount -lt $x ] || [ $x -eq 0 ]; do
 	if [ $seq -gt 0 ]; then
 		_DEBUG=false
 	fi
-	if [ $pingCount -lt $x ] || [ $x -eq 0 ]; then
-		sleep ${repeatWaitTime}
-	fi
 	if [ "$result" = "" ]; then
 		wait $pid > /dev/null 2>&1
 		result=$?
@@ -392,6 +389,9 @@ while [ $pingCount -lt $x ] || [ $x -eq 0 ]; do
 	pingCount=`expr $pingCount + 1`
 	if [ $result -ne 0 ]; then
 		pingFailCount=`expr $pingFailCount + 1`
+	fi
+	if [ $pingCount -lt $x ] || [ $x -eq 0 ]; then
+		sleep ${repeatWaitTime}
 	fi
 done
 
