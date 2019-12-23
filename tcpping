@@ -187,7 +187,7 @@ _checkSite() {
 			echo >&2 "Unable to run '$traceRouteCommand' command. Please try run $0 with -Z parameter or 'sudo $0'"
 			return 20
 		else
-			echo >&2 "Unable to run '$traceRouteCommand' command. Please submit an issue in 'https://github.com/deajan/tcpping/issues'"
+			echo >&2 "Unable to run '$traceRouteCommand' command. Please submit an issue in 'https://github.com/deajan/tcpping/issues' with the output of the command. "
 			return 21
 		fi
 	fi
