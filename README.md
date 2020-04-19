@@ -1,5 +1,10 @@
 # tcpping v2.x
 
+Warning: With version 2.4, some defaults have changed, ie:
+timeToWait is now 1 second instead of 3
+repeatInterval is now automatically calculated to fit timeToWait
+These changes have been made to make interaction with Smokeping easier
+
 ## fork of elder tcpping v1.8 script running with newer traceroute binary
 
 This script is a fork of Richard Van den Berg's tcpping script, original version found [here](https://github.com/deajan/tcpping/tree/original-1.8), supporting newer traceroute binaries.
