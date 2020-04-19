@@ -1,9 +1,10 @@
 # tcpping v2.x
 
-Warning: With version 2.4, some defaults have changed, ie:
-timeToWait is now 1 second instead of 3
-repeatInterval is now automatically calculated to fit timeToWait
-These changes have been made to make interaction with Smokeping easier
+**Warning: With version 2.4, some defaults have changed:**
+   - Default timeout is now 1 second instead of 3
+   - Interval between pings is now automatically calculated to fit timeout
+
+These changes have been made to make Smokeping integration easier.
 
 ## fork of elder tcpping v1.8 script running with newer traceroute binary
 
