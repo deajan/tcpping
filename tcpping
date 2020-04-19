@@ -338,9 +338,7 @@ esac
 # Use an arbitrary factor of 0.7 to cope with shell execution time
 
 if [ "$interval" == "auto" ]; then
-	if [ $x -ne 0 ]; then
-		interval=`awk 'BEGIN { print ('$timeToWait'*.7)}'`
-	fi
+	interval=`awk 'BEGIN { print ('$timeToWait'*.7)}'`
 fi
 
 pingCount=0
