@@ -6,7 +6,7 @@
 #
 # uses recent versions of traceroute supporting TCP sessions
 #
-# (c) 2002-2019 Richard van den Berg <richard@vdberg.org> under the GPL
+# (c) 2002-2020 Richard van den Berg <richard@vdberg.org> under the GPL
 #               http://www.gnu.org/copyleft/gpl.html
 #               Orsiris de Jong <ozy@netpower.fr>
 #
@@ -41,9 +41,14 @@
 #                 added -o parameter, which outputs statistics similar to ping
 #                 Simpify main loop
 #                 fix ambiguous output redirect in csh for preflight check
-# 2019/10/11 v2.4 fixed -r parameter, which also accepts floats now, and added -r auto option
+# 2020/04/19 v2.4 fixed -r parameter, which also accepts floats now, and added -r auto option, which calculates
+#                 a wait interval based on timeToWait (-w) parameter
+#                 Do not wait additional interval time when ping fails before running next try
+#                 Remove _checkSite function (merged into _testSite) to avoid code duplicartion, and lower execution time
+#                 Set default wait interval (-r) parameter to auto
+#                 Set default timeToWait parameter to 1 second
 
-ver="v2.4-dev"
+ver="v2.4"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
@@ -52,8 +57,8 @@ f_ttl=255
 m_ttl=255
 seq=0
 numberOfQueries=1
-interval=1
-timeToWait=3
+interval=auto
+timeToWait=1
 topts=""
 SUDO_COMMAND=""
 _DEBUG=false
@@ -64,6 +69,9 @@ x=0
 
 # Make sure traceroute output is language agnostic
 export LANG=C
+
+# Make sure we get exit codes from piped commands
+set -o pipefail
 
 usage () {
 	name=`basename $0`
@@ -160,43 +168,6 @@ checkEnvironment() {
 }
 
 # Check if site can be reached via TCP SYN
-_checkSite() {
-	local host="${1}"
-	local port="${2:-80}"
-
-	local args=
-	local i=1
-	for givenArgs in "${@}"; do
-		if [ $i -gt 2 ]; then
-			args="$args $givenArgs"
-		fi
-		i=`expr $i + 1`
-	done
-
-	local traceRoute=
-	local traceRouteCommand=
-
-	traceRouteCommand="$SUDO_COMMAND traceroute ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
-	if [ $_DEBUG = true ]; then
-		echo >&2 "$traceRouteCommand"
-	fi
-
-	traceRoute=`$traceRouteCommand 2>&1`
-	if [ $? -ne 0 ]; then
-		if [ "`id -u`" -ne 0 ]; then
-			echo >&2 "Unable to run '$traceRouteCommand' command. Please try run $0 with -Z parameter or 'sudo $0'"
-			return 20
-		else
-			echo >&2 "Unable to run '$traceRouteCommand' command. Please submit an issue in 'https://github.com/deajan/tcpping/issues' with the output of the command. "
-			return 21
-		fi
-	fi
-
-	if echo "${traceRoute}" | egrep -i "(bad destination|got roo|not known|cannot handle)" >/dev/null 2>&1; then
-		echo >&2 "${traceRoute}"
-		return 22
-	fi
-}
 
 # Measure latency via TCP SYN
 _testSite() {
@@ -234,13 +205,24 @@ _testSite() {
 	else
 		traceRoute=`$traceRouteCommand 2>/dev/null | awk 'NR>1'`
 	fi
+	result=$?
 
-	# Smokeping does not like double output (fqdn + ip), so we leave host as given by smokeping
-	#foundHost=`echo "${traceRoute}" | awk '{print $2" "$3}'`
-	#
-	#if [ "$foundHost" != "" ] && [ "$foundHost" != "* " ]; then
-	#	host="$foundHost"
-	#fi
+	if [ $myseq -eq 0 ]; then
+		if [ $result -ne 0 ]; then
+			if [ "`id -u`" -ne 0 ]; then
+				echo >&2 "Unable to run '$traceRouteCommand' command. Please try run $0 with -Z parameter or 'sudo $0'"
+				exit 20
+			else
+				echo >&2 "Unable to run '$traceRouteCommand' command. Please submit an issue in 'https://github.com/deajan/tcpping/issues' with the output of the command."
+				exit 21
+			fi
+		fi
+
+		if echo "${traceRoute}" | egrep -i "(bad destination|got roo|not known|cannot handle)" >/dev/null 2>&1; then
+			echo >&2 "${traceRoute}"
+			exit 22
+		fi
+	fi
 
 	rtt=`echo "${traceRoute}" | awk '{print $4}'`
 	not=`echo "${rtt}" | tr -d ".0123456789"`
@@ -294,16 +276,7 @@ while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM:o opt ; do
 		w) timeToWait="$OPTARG" ;;
 		f) f_ttl="$OPTARG" ;;
 		m) m_ttl="$OPTARG" ;;
-		M) METHOD="$OPTARG"
-		case "$METHOD" in
-			icmp) ;;
-			tcp) ;;
-			udp) ;;
-			*)
-			echo >&2 "Unsupported method. Falling back to TCP"
-			METHOD=tcp
-			;;
-		esac ;;
+		M) METHOD="$OPTARG" ;;
 		Z) SUDO_COMMAND=sudo ;;
 		z) _DEBUG=true ;;
 		o) summary="yes" ;;
@@ -360,28 +333,13 @@ case $lastArg in
 	;;
 esac
 
-_checkSite "${host}" "${port}" ${topt}
-err=$?
-
-[ ${err} -gt 0 ] && exit ${err}
-
 # Try to compute interval value so whole execution takes less time than (repeats * interval)
 # Remove an arbitrary second for pre execution script work
-# Use an arbitrary factor of 0.8 to cope with shell execution time
+# Use an arbitrary factor of 0.7 to cope with shell execution time
 
 if [ "$interval" == "auto" ]; then
 	if [ $x -ne 0 ]; then
-		interval=`awk 'BEGIN { print ('$x'*'$timeToWait' -1)/'$x'*.8 }'`
-	else
-		interval=-1
-	fi
-
-	if ! awk 'BEGIN { exit "'$interval'"<"0" }'; then
-		interval=`awk 'BEGIN { print ('$timeToWait'*.8 - 1)}'`
-	fi
-
-	if ! awk 'BEGIN { exit "'$interval'"<"0" }'; then
-		interval=`awk 'BEGIN { print ('$timeToWait'*.8)}'`
+		interval=`awk 'BEGIN { print ('$timeToWait'*.7)}'`
 	fi
 fi
 
@@ -409,8 +367,10 @@ while [ $pingCount -lt $x ] || [ $x -eq 0 ]; do
 	pingCount=`expr $pingCount + 1`
 	if [ $result -ne 0 ]; then
 		pingFailCount=`expr $pingFailCount + 1`
-	fi
-	if [ $pingCount -lt $x ] || [ $x -eq 0 ]; then
+		if [ $result -eq 20 ] || [ $result -eq 21 ] || [ $result -eq 22 ]; then
+			exit $result
+		fi
+	elif [ $pingCount -lt $x ] || [ $x -eq 0 ]; then
 		sleep ${interval}
 	fi
 done
