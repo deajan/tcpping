@@ -47,8 +47,9 @@
 #                 Remove _checkSite function (merged into _testSite) to avoid code duplicartion, and lower execution time
 #                 Set default wait interval (-r) parameter to auto
 #                 Set default timeToWait parameter to 1 second
+# v2.5-dev        Fixed set -o pipefail only exists on bash
 
-ver="v2.4"
+ver="v2.5dev"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
@@ -71,7 +72,7 @@ x=0
 export LANG=C
 
 # Make sure we get exit codes from piped commands
-set -o pipefail
+[ -n "$BASH_VERSION" ] && set -o pipefail
 
 usage () {
 	name=`basename $0`
