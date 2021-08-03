@@ -338,7 +338,7 @@ esac
 # Remove an arbitrary second for pre execution script work
 # Use an arbitrary factor of 0.7 to cope with shell execution time
 
-if [ "$interval" == "auto" ]; then
+if [ "$interval" = "auto" ]; then
 	interval=`awk 'BEGIN { print ('$timeToWait'*.7)}'`
 fi
 
