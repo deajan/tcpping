@@ -21,7 +21,7 @@ Also, smokeping 2.7.2 and 2.7.3 have been tested.
 
 ## Installation
 
-`sudo wget -O /usr/bin/tcpping https://raw.githubusercontent.com/deajan/tcpping/master/tcpping ; chmod 755 /usr/bin/tcpping`
+`sudo wget -O /usr/bin/tcpping https://raw.githubusercontent.com/deajan/tcpping/master/tcpping ; sudo chmod 755 /usr/bin/tcpping`
 
 ## Usage
 
