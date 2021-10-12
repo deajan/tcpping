@@ -204,7 +204,7 @@ _testSite() {
 
 	# Remove first line from result
 	if [ "$traceRouteBinary" = "tcptraceroute" ]; then
-		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} -A -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
+		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
 	else
 		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
 	fi
@@ -220,7 +220,7 @@ _testSite() {
 	fi
 	result=$?
 
-	if [ $myseq -eq 0 ]; then
+	if [ "$traceRouteBinary" = "tcptraceroute" ] && [ $myseq -eq 0 ]; then
 		if [ $result -ne 0 ]; then
 			if [ "`id -u`" -ne 0 ]; then
 				echo >&2 "Unable to run '$traceRouteCommand' command. Please try run $0 with -Z parameter or 'sudo $0'"
@@ -239,6 +239,13 @@ _testSite() {
 
 	if [ "$traceRouteBinary" = "tcptraceroute" ]; then
 		rtt=`echo "${traceRoute}" | sed 's/.*] //' | awk '{print $1}'`
+		# if RTT is 255, try again with ACK method
+		if [ "$rtt" = "255" ]; then
+			if [ $_DEBUG = true ]; then echo "SYN method failed, attempting ACK method..."; fi
+			traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} -A -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
+			traceRoute=`$traceRouteCommand 2>/dev/null`
+			rtt=`echo "${traceRoute}" | sed 's/.*] //' | awk '{print $1}'`
+		fi
 	else
 		rtt=`echo "${traceRoute}" | awk '{print $4}'`
 	fi
