@@ -204,7 +204,7 @@ _testSite() {
 
 	# Remove first line from result
 	if [ "$traceRouteBinary" = "tcptraceroute" ]; then
-		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
+		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} -A -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
 	else
 		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
 	fi
