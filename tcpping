@@ -62,7 +62,6 @@ interval=auto
 timeToWait=1
 topts=""
 SUDO_COMMAND=""
-_DEBUG=false
 LOCAL_OS=
 METHOD=tcp
 summary="no"
@@ -74,6 +73,9 @@ export LANG=C
 
 # Make sure we get exit codes from piped commands
 [ -n "$BASH_VERSION" ] && set -o pipefail
+
+# Set _DEBUG to false unless already set
+[ "$_DEBUG" == "" ] && _DEBUG=false
 
 usage () {
 	name=`basename $0`
