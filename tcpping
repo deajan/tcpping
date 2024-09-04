@@ -221,9 +221,9 @@ _testSite() {
 	[ "${d}" = "yes" ] && nowd=`date`
 
 	if [ "$traceRouteImplementation" = "tcptraceroute" ]; then
-		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
+		traceRouteCommand="$SUDO_COMMAND${traceRouteBinary} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
 	else
-		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
+		traceRouteCommand="$SUDO_COMMAND${traceRouteBinary} ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
 	fi
 	if [ $_DEBUG = true ]; then
 		echo "$traceRouteCommand"
@@ -262,7 +262,7 @@ _testSite() {
 			if [ $_DEBUG = true ]; then
 				echo >&2 "SYN method failed, attempting ACK method..."
 			fi
-			traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} -A -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
+			traceRouteCommand="$SUDO_COMMAND${traceRouteBinary} -A -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
 			traceRoute=`$traceRouteCommand 2>/dev/null`
 			rtt=`echo "${traceRoute}" | sed 's/.*] //' | awk '{print $1}'`
 		fi
@@ -324,7 +324,7 @@ while getopts Zdhzq:w:cr:nNFSAEi:f:l:m:p:s:x:CM:o opt ; do
 		f) f_ttl="$OPTARG" ;;
 		m) m_ttl="$OPTARG" ;;
 		M) METHOD="$OPTARG" ;;
-		Z) SUDO_COMMAND=sudo ;;
+		Z) SUDO_COMMAND="sudo " ;;
 		z) _DEBUG=true ;;
 		o) summary="yes" ;;
 		?) usage; exit ;;
