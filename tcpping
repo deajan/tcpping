@@ -175,7 +175,7 @@ checkEnvironment() {
 			return
 		else
 			if [ $_DEBUG = true ]; then
-				echo "traceroute does not support -M parameter, switching to tcptraceroute"
+				echo >&2 "traceroute does not support -M parameter, switching to tcptraceroute"
 			fi
 		fi
 	fi
@@ -259,7 +259,9 @@ _testSite() {
 		rtt=`echo "${traceRoute}" | sed 's/.*] //' | awk '{print $1}'`
 		# if RTT is 255, try again with ACK method
 		if [ "$rtt" = "255" ]; then
-			if [ $_DEBUG = true ]; then echo "SYN method failed, attempting ACK method..."; fi
+			if [ $_DEBUG = true ]; then
+				echo >&2 "SYN method failed, attempting ACK method..."
+			fi
 			traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} -A -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
 			traceRoute=`$traceRouteCommand 2>/dev/null`
 			rtt=`echo "${traceRoute}" | sed 's/.*] //' | awk '{print $1}'`
