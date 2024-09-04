@@ -49,7 +49,8 @@
 #                 Set default timeToWait parameter to 1 second
 # v2.5-dev        Fixed set -o pipefail only exists on bash
 #                 Aloow _DEBUG parameter needed to be set in environment
-#                 Fxied -n parameter together with -C parameter did not produce expected output
+#                 Fixed -n parameter together with -C parameter did not produce expected output
+#                 Improved traceroute binary detection
 
 ver="v2.5dev"
 format="%Y%m%d%H%M%S"
@@ -162,21 +163,30 @@ getLocalOS() {
 }
 
 checkEnvironment() {
-	if ! type traceroute > /dev/null; then
-		echo >&2 "traceroute binary not found. Please install it first"
-		exit 1
-	fi
-	
-	if [ `${traceRouteBinary} -M 2>&1 | grep -c unrecog` -eq 1 ]; then
-		if [ $_DEBUG = true ]; then
-			echo "traceroute does not support -M parameter, switch to tcptraceroute"
-		fi
-		traceRouteBinary="tcptraceroute"
-	fi
-
 	if ! type awk > /dev/null; then
 		echo >&2 "awk binary not found. Please install it first"
 		exit 2
+	fi
+
+	if type traceroute > /dev/null; then
+		traceRouteBinary=`type -p traceroute | awk '{print $(NF)}'`
+		if [ `${traceRouteBinary} -M 2>&1 | grep -c unrecog` -eq 0 ]; then
+			traceRouteImplementation="traceroute"
+			return
+		else
+			if [ $_DEBUG = true ]; then
+				echo "traceroute does not support -M parameter, switching to tcptraceroute"
+			fi
+		fi
+	fi
+
+	if type tcptraceroute > /dev/null; then
+		traceRouteBinary=`type -p tcptraceroute  | awk '{print $(NF)}'`
+		traceRouteImplementation="tcptraceroute"
+		return
+	else
+		echo >&2 "traceroute binary not found. Switching to tcptraceroute also failed."
+		exit 1
 	fi
 }
 
@@ -210,8 +220,7 @@ _testSite() {
 	[ "${c}" = "yes" ] && nows=`date +${format}`
 	[ "${d}" = "yes" ] && nowd=`date`
 
-	# Remove first line from result
-	if [ "$traceRouteBinary" = "tcptraceroute" ]; then
+	if [ "$traceRouteImplementation" = "tcptraceroute" ]; then
 		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
 	else
 		traceRouteCommand="$SUDO_COMMAND ${traceRouteBinary} ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
@@ -221,14 +230,15 @@ _testSite() {
 	fi
 
 	# BSD traceroute (and tcptraceroute) outputs header line to stderr while outputting results to stdout, whereas linux versions output everything to stdout
-	if [ "$traceRouteBinary" = "tcptraceroute" ] || [ "$LOCAL_OS" = "BSD" ] || [ "$LOCAL_OS" = "MacOSX" ]; then
+	if [ "$traceRouteImplementation" = "tcptraceroute" ] || [ "$LOCAL_OS" = "BSD" ] || [ "$LOCAL_OS" = "MacOSX" ]; then
 		traceRoute=`$traceRouteCommand 2>/dev/null`
 	else
+		# Remove first line from result when using traceroute to avoid header
 		traceRoute=`$traceRouteCommand 2>/dev/null | awk 'NR>1'`
 	fi
 	result=$?
 
-	if [ "$traceRouteBinary" = "tcptraceroute" ] && [ $myseq -eq 0 ]; then
+	if [ "$traceRouteImplementation" = "tcptraceroute" ] && [ $myseq -eq 0 ]; then
 		if [ $result -ne 0 ]; then
 			if [ "`id -u`" -ne 0 ]; then
 				echo >&2 "Unable to run '$traceRouteCommand' command. Please try run $0 with -Z parameter or 'sudo $0'"
@@ -245,7 +255,7 @@ _testSite() {
 		fi
 	fi
 
-	if [ "$traceRouteBinary" = "tcptraceroute" ]; then
+	if [ "$traceRouteImplementation" = "tcptraceroute" ]; then
 		rtt=`echo "${traceRoute}" | sed 's/.*] //' | awk '{print $1}'`
 		# if RTT is 255, try again with ACK method
 		if [ "$rtt" = "255" ]; then
