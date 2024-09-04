@@ -188,9 +188,13 @@ _testSite() {
 
 	local args=
 	local i=1
+	local traceroute_arg_n=false
 	for givenArgs in "${@}"; do
 		if [ $i -gt 3 ]; then
 			args="$args $givenArgs"
+			if [ "${givenArgs}" == "-n" ]; then
+				traceroute_arg_n=true
+			fi
 		fi
 		i=`expr $i + 1`
 	done
@@ -248,6 +252,11 @@ _testSite() {
 			traceRoute=`$traceRouteCommand 2>/dev/null`
 			rtt=`echo "${traceRoute}" | sed 's/.*] //' | awk '{print $1}'`
 		fi
+	else
+		rtt=`echo "${traceRoute}" | awk '{print $4}'`
+	fi
+	if [ "${traceroute_arg_n}" = true ]; then
+		rtt=`echo "${traceRoute}" | awk '{print $3}'`
 	else
 		rtt=`echo "${traceRoute}" | awk '{print $4}'`
 	fi
