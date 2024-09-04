@@ -168,12 +168,12 @@ getLocalOS() {
 }
 
 checkEnvironment() {
-	if ! type awk > /dev/null; then
+	if ! type awk > /dev/null 2>&1; then
 		echo >&2 "awk binary not found. Please install it first"
 		exit 2
 	fi
 
-	if type traceroute > /dev/null; then
+	if type traceroute > /dev/null 2>&1; then
 		traceRouteBinary=`type traceroute | awk '{print $(NF)}'`
 		if [ `${traceRouteBinary} -M 2>&1 | grep -c unrecog` -eq 0 ]; then
 			traceRouteImplementation="traceroute"
@@ -185,7 +185,7 @@ checkEnvironment() {
 		fi
 	fi
 
-	if type tcptraceroute > /dev/null; then
+	if type tcptraceroute > /dev/null 2>&1; then
 		traceRouteBinary=`type tcptraceroute  | awk '{print $(NF)}'`
 		traceRouteImplementation="tcptraceroute"
 		return
