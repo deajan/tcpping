@@ -6,7 +6,7 @@
 #
 # uses recent versions of traceroute supporting TCP sessions
 #
-# (c) 2002-2020 Richard van den Berg <richard@vdberg.org> under the GPL
+# (c) 2002-2024 Richard van den Berg <richard@vdberg.org> under the GPL
 #               http://www.gnu.org/copyleft/gpl.html
 #               Orsiris de Jong <ozy@netpower.fr>
 #
@@ -48,6 +48,8 @@
 #                 Set default wait interval (-r) parameter to auto
 #                 Set default timeToWait parameter to 1 second
 # v2.5-dev        Fixed set -o pipefail only exists on bash
+#                 Aloow _DEBUG parameter needed to be set in environment
+#                 Fxied -n parameter together with -C parameter did not produce expected output
 
 ver="v2.5dev"
 format="%Y%m%d%H%M%S"
