@@ -53,7 +53,7 @@
 #                 Improved traceroute binary detection
 #                 Send error messages to stderr
 #                 Added zsh support
-#				  Added fallback support for tcptraceroute, courtesy of Damien Mascord <tusker@tusker.org>
+#                 Added fallback support for tcptraceroute, courtesy of Damien Mascord <tusker@tusker.org>
 
 ver="v2.5"
 format="%Y%m%d%H%M%S"
