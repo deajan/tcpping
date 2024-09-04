@@ -47,14 +47,15 @@
 #                 Remove _checkSite function (merged into _testSite) to avoid code duplicartion, and lower execution time
 #                 Set default wait interval (-r) parameter to auto
 #                 Set default timeToWait parameter to 1 second
-# v2.5-dev        Fixed set -o pipefail only exists on bash
+# 2024/09/04 v2.5 Fixed set -o pipefail only exists on bash
 #                 Aloow _DEBUG parameter needed to be set in environment
 #                 Fixed -n parameter together with -C parameter did not produce expected output
 #                 Improved traceroute binary detection
 #                 Send error messages to stderr
 #                 Added zsh support
+#				  Added fallback support for tcptraceroute, courtesy of Damien Mascord <tusker@tusker.org>
 
-ver="v2.5dev"
+ver="v2.5"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
