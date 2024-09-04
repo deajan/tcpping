@@ -174,7 +174,7 @@ checkEnvironment() {
 	fi
 
 	if type traceroute > /dev/null; then
-		traceRouteBinary=`type -p traceroute | awk '{print $(NF)}'`
+		traceRouteBinary=`type traceroute | awk '{print $(NF)}'`
 		if [ `${traceRouteBinary} -M 2>&1 | grep -c unrecog` -eq 0 ]; then
 			traceRouteImplementation="traceroute"
 			return
@@ -186,7 +186,7 @@ checkEnvironment() {
 	fi
 
 	if type tcptraceroute > /dev/null; then
-		traceRouteBinary=`type -p tcptraceroute  | awk '{print $(NF)}'`
+		traceRouteBinary=`type tcptraceroute  | awk '{print $(NF)}'`
 		traceRouteImplementation="tcptraceroute"
 		return
 	else
