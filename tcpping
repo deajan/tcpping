@@ -51,6 +51,8 @@
 #                 Aloow _DEBUG parameter needed to be set in environment
 #                 Fixed -n parameter together with -C parameter did not produce expected output
 #                 Improved traceroute binary detection
+#                 Send error messages to stderr
+#                 Added zsh support
 
 ver="v2.5dev"
 format="%Y%m%d%H%M%S"
@@ -76,6 +78,9 @@ export LANG=C
 
 # Make sure we get exit codes from piped commands
 [ -n "$BASH_VERSION" ] && set -o pipefail
+
+# ZSH doesn't split words by default, so we need to set it for script to run in bash/dash/zsh
+[ -n "$ZSH_VERSION" ] && setopt sh_word_split
 
 # Set _DEBUG to false unless already set
 [ "$_DEBUG" = "" ] && _DEBUG=false
