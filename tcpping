@@ -228,7 +228,7 @@ _testSite() {
 
 	if [ "$traceRouteImplementation" = "tcptraceroute" ]; then
 		if [ "${METHOD}" != "tcp" ] && [ "$LOCAL_OS" != "BSD" ] && [ "$LOCAL_OS" != "MacOSX" ]; then
-			echo echo >&2 "Cannot use ${traceRouteBinary} with method ${method}. Please use traceroute"
+			echo echo >&2 "Cannot use ${traceRouteBinary} with method ${METHOD}. Please use traceroute"
 			exit 23
 		fi
 		traceRouteCommand="$SUDO_COMMAND${traceRouteBinary} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
