@@ -188,7 +188,7 @@ checkEnvironment() {
 			traceRouteImplementation="traceroute"
 			return
 		else
-			if [ $_DEBUG = true ]; then
+			if [ "${_DEBUG}" = true ]; then
 				echo >&2 "traceroute does not support -M parameter, switching to tcptraceroute"
 			fi
 		fi
@@ -206,7 +206,7 @@ checkEnvironment() {
 
 # Check if site can be reached via TCP SYN
 
-# Measure latency via TCP SYN
+# Measure latency via TCP SYN / UDP / ICMP
 _testSite() {
 	local host="${1}"
 	local port="${2:-80}"
@@ -235,11 +235,15 @@ _testSite() {
 	[ "${d}" = "yes" ] && nowd=`date`
 
 	if [ "$traceRouteImplementation" = "tcptraceroute" ]; then
+		if [ "${METHOD}" != "tcp" ] && [ "$LOCAL_OS" != "BSD" ] && [ "$LOCAL_OS" != "MacOSX" ]; then
+			echo echo >&2 "Cannot use ${traceRouteBinary} with method ${METHOD}. Please use traceroute"
+			exit 23
+		fi
 		traceRouteCommand="$SUDO_COMMAND${traceRouteBinary} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
 	else
 		traceRouteCommand="$SUDO_COMMAND${traceRouteBinary} ${METHOD_PARAMETER} ${METHOD} -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} -p ${port} ${host}"
 	fi
-	if [ $_DEBUG = true ]; then
+	if [ "${_DEBUG}" = true ]; then
 		echo "$traceRouteCommand"
 	fi
 
@@ -273,7 +277,7 @@ _testSite() {
 		rtt=`echo "${traceRoute}" | sed 's/.*] //' | awk '{print $1}'`
 		# if RTT is 255, try again with ACK method
 		if [ "$rtt" = "255" ]; then
-			if [ $_DEBUG = true ]; then
+			if [ "${_DEBUG}" = true ]; then
 				echo >&2 "SYN method failed, attempting ACK method..."
 			fi
 			traceRouteCommand="$SUDO_COMMAND${traceRouteBinary} -A -f ${f_ttl} -m ${m_ttl} -q ${numberOfQueries} -w ${timeToWait} ${args} ${host} ${port}"
