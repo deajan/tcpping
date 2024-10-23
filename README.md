@@ -54,7 +54,8 @@ bob ALL=(ALL) NOPASSWD: /usr/bin/traceroute
 
 ## Default options
 
-You can set default options (like `-Z` required for smokeping) in a configuration file `/etc/tcpping.conf` that would contain the default options like `TCPPING_EXTRA_ARGS="-Z`.
+You can set default options (like `-Z` required for smokeping) in a configuration file `/etc/tcpping.conf` that would contain default script arguments like `TCPPING_EXTRA_ARGS="-Z`.
+
 
 ## Licence and improvements
 
