@@ -50,6 +50,10 @@ By doing so, you may edit your sudoers file by allowing user 'bob' to run tracer
 bob ALL=(ALL) NOPASSWD: /usr/bin/traceroute
 ```
 
+## Default options
+
+You can set default options (like `-Z` required for smokeping) in a configuration file `/etc/tcpping.conf` that would contain the default options like `TCPPING_EXTRA_ARGS="-Z`.
+
 ## Licence and improvements
 
 Altough there are probably better tools out there (hping, nmap, etc), this is still a quick and handy tool used by smokeping, so every improvement / fork / pull request is more than welcome.

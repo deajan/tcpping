@@ -54,8 +54,9 @@
 #                 Send error messages to stderr
 #                 Added zsh support
 #                 Added fallback support for tcptraceroute, courtesy of Damien Mascord <tusker@tusker.org>
+# 2024/10/24 dev  Added support for optional /etc/tcpping.conf file
 
-ver="v2.5"
+ver="v2.6-dev"
 format="%Y%m%d%H%M%S"
 d="no"
 c="no"
@@ -76,6 +77,13 @@ traceRouteBinary="traceroute"
 
 # Make sure traceroute output is language agnostic
 export LANG=C
+
+# Load optional configuration file from /etc or current directory
+[ -f "/etc/tcpping.conf" ] && source "/etc/tcpping.conf"
+[ -f "./tcpping.conf" ] && source "./tcpping.conf"
+
+# Apply extra arguments from configuration file if exist
+[ -n "${TCPPING_EXTRA_ARGS}" ] && set -- ${TCPPING_EXTRA_ARGS} ${@}
 
 # Make sure we get exit codes from piped commands
 [ -n "$BASH_VERSION" ] && set -o pipefail
