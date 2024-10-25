@@ -10,7 +10,8 @@ jobs:
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
         # SC2086 (info): Double quote to prevent globbing and word splitting.
-        # SC2006: (style): Use $(...) notation instead of legacy backticks `...`
+        # SC2068 (error): Double quote array expansions to avoid re-splitting elements. [SC2068]
+        # SC2006 (style): Use $(...) notation instead of legacy backticks `...`
         # SC3043 (warning): In POSIX sh, 'local' is undefined.
         #  https://stackoverflow.com/questions/18597697/posix-compliant-way-to-scope-variables-to-a-function-in-a-shell-script#answer-18600920
         # SC2046 (warning): Quote this to prevent word splitting.
@@ -20,6 +21,6 @@ jobs:
         # SC2010 (warning): Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
         # SC3040 (warning): In POSIX sh, set option pipefail is undefined.
         env:
-          SHELLCHECK_OPTS: -e SC2086 -e SC2006 -e SC3043 -e SC2046 -e SC2003 -e SC3037 -e SC2181 -e SC2010 -e SC3040
+          SHELLCHECK_OPTS: -e SC2068 -e SC2086 -e SC2006 -e SC3043 -e SC2046 -e SC2003 -e SC3037 -e SC2181 -e SC2010 -e SC3040
         with:
           scandir: './'
