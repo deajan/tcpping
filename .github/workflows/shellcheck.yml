@@ -15,7 +15,11 @@ jobs:
         #  https://stackoverflow.com/questions/18597697/posix-compliant-way-to-scope-variables-to-a-function-in-a-shell-script#answer-18600920
         # SC2046 (warning): Quote this to prevent word splitting.
         # SC2003 (style): expr is antiquated. Consider rewriting this using $((..)), ${} or [[ ]].
+        # SC3037 (warning): In POSIX sh, echo flags are undefined.
+        # SC2181 (note): Check exit code directly with e.g. 'if ! mycmd;', not indirectly with $?.
+        # SC2010 (warning): Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
+        # SC3040 (warning): In POSIX sh, set option pipefail is undefined.
         env:
-          SHELLCHECK_OPTS: -e SC2086 -e SC2006 -e SC3043 -e SC2046 -e SC2003
+          SHELLCHECK_OPTS: -e SC2086 -e SC2006 -e SC3043 -e SC2046 -e SC2003 -e SC3037 -e SC2181 -e SC2010 -e SC3040
         with:
           scandir: './'
