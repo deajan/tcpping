@@ -1,3 +1,9 @@
+[![License](https://img.shields.io/badge/license-GPLv3-blu.svg)](https://opensource.org/licenses/GPL-3.0)
+[![GitHub Release](https://img.shields.io/github/release/deajan/tcpping.svg?label=Latest)](https://github.com/deajan/tcpping/releases/latest)
+[![Bash linter](https://github.com/deajan/tcpping/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/deajan/tcpping/actions/workflows/shellcheck.yml)
+
+
+
 # tcpping v2.x
 
 A (quick and dirty) tool to ping TCP / UDP service ports  
