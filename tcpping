@@ -297,7 +297,7 @@ _testSite() {
 
 	[ "${d}" = "yes" ] && echo "$nowd"
 	if [ "${c}" = "yes" ]; then
-		if [ "${rtt}" != "" -a "${not}" = "" ]; then
+		if [ "${rtt}" != "" ] && [ "${not}" = "" ]; then
 			echo "$myseq $nows $rtt $host"
 		else
 			echo "$myseq $nows $maxRtt $host"
@@ -306,7 +306,7 @@ _testSite() {
 		if [ "$myseq" = "0" ]; then
 			echo -n "$host :"
 		fi
-		if [ "${rtt}" != "" -a "${not}" = "" ]; then
+		if [ "${rtt}" != "" ] && [ "${not}" = "" ]; then
 			if [ $rtt != "255" ]; then
 				echo -n " $rtt"
 			else
