@@ -79,6 +79,7 @@ traceRouteBinary="traceroute"
 export LANG=C
 
 # Make sure we get exit codes from piped commands
+# dash < 0.5.12 doesn't support this, so we can't just activate it since there's no easy way to check dash version without making use of repo management
 [ -n "$BASH_VERSION" ] && set -o pipefail
 
 # ZSH doesn't split words by default, so we need to set it for script to run in bash/dash/zsh
