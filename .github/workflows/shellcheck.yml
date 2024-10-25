@@ -20,6 +20,8 @@ jobs:
         # SC2181 (note): Check exit code directly with e.g. 'if ! mycmd;', not indirectly with $?.
         # SC2010 (warning): Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
         # SC3040 (warning): In POSIX sh, set option pipefail is undefined.
+        # SC1091 (note): Not following: [FILEPATH] was not specified as input (see shellcheck -x).
+        #  We don't want to follow the optional config files here
         env:
           SHELLCHECK_OPTS: -e SC2068 -e SC2086 -e SC2006 -e SC3043 -e SC2046 -e SC2003 -e SC3037 -e SC2181 -e SC2010 -e SC3040
         with:
