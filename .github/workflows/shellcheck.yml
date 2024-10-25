@@ -18,4 +18,4 @@ jobs:
         env:
           SHELLCHECK_OPTS: -e SC2086 -e SC2006 -e SC3043 -e SC2046 -e SC2003
         with:
-          scandir: './kickstart_source_script'
+          scandir: './'
