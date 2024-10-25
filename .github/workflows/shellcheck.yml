@@ -1,0 +1,21 @@
+name: ShellCheck
+on: [push]
+
+jobs:
+  shellcheck:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        # SC2086 (info): Double quote to prevent globbing and word splitting.
+        # SC2006: (style): Use $(...) notation instead of legacy backticks `...`
+        # SC3043 (warning): In POSIX sh, 'local' is undefined.
+        #  https://stackoverflow.com/questions/18597697/posix-compliant-way-to-scope-variables-to-a-function-in-a-shell-script#answer-18600920
+        # SC2046 (warning): Quote this to prevent word splitting.
+        # SC2003 (style): expr is antiquated. Consider rewriting this using $((..)), ${} or [[ ]].
+        env:
+          SHELLCHECK_OPTS: -e SC2086 -e SC2006 -e SC3043 -e SC2046 -e SC2003
+        with:
+          scandir: './kickstart_source_script'
