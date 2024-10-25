@@ -23,6 +23,6 @@ jobs:
         # SC1091 (note): Not following: [FILEPATH] was not specified as input (see shellcheck -x).
         #  We don't want to follow the optional config files here
         env:
-          SHELLCHECK_OPTS: -e SC2068 -e SC2086 -e SC2006 -e SC3043 -e SC2046 -e SC2003 -e SC3037 -e SC2181 -e SC2010 -e SC3040
+          SHELLCHECK_OPTS: -e SC2068 -e SC2086 -e SC2006 -e SC3043 -e SC2046 -e SC2003 -e SC3037 -e SC2181 -e SC2010 -e SC3040 -e SC1091
         with:
           scandir: './'
