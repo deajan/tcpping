@@ -102,7 +102,7 @@ usage () {
 	echo "Usage: $name [-d] [-c] [-C] [-w sec] [-q num] [-x count] ipaddress [port]"
 	echo
 	echo "        -d            print timestamp before every result"
-	echo "        -c            print a columned result line"
+	echo "        -c            print a computer parsable result line"
 	echo "        -C            print in the same format as fping's -C option"
 	echo "        -w            wait time in seconds (defaults to 1). Linux supports float values, ie '.2'"
 	echo "        -r            repeat every n seconds (defaults to auto). Linux supports float values, ie '.2'"
