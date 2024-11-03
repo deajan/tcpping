@@ -6,9 +6,9 @@
 #
 # uses recent versions of traceroute supporting TCP sessions
 #
-# (c) 2002-2024 Richard van den Berg <richard@vdberg.org> under the GPL
-#               http://www.gnu.org/copyleft/gpl.html
-#               Orsiris de Jong <ozy@netpower.fr>
+# (c) 2002-2024 Richard van den Berg <richard@vdberg.org>, Orsiris de Jong <ozy@netpower.fr>
+# under the GPL http://www.gnu.org/copyleft/gpl.html
+#               
 #
 # 2002/12/20 v1.0 initial version
 # 2003/01/25 v1.1 added -c and -r options
@@ -54,7 +54,8 @@
 #                 Send error messages to stderr
 #                 Added zsh support
 #                 Added fallback support for tcptraceroute, courtesy of Damien Mascord <tusker@tusker.org>
-# 2024/10/24 dev  Added support for optional /etc/tcpping.conf file
+# 2024/10/24 v2.6 Added support for optional /etc/tcpping.conf file
+#                 Various shellcheck fixes
 
 ver="v2.6-dev"
 format="%Y%m%d%H%M%S"
