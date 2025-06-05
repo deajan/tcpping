@@ -286,11 +286,7 @@ _testSite() {
 	else
 		rtt=`echo "${traceRoute}" | awk '{print $4}'`
 	fi
-	if [ "${traceroute_arg_n}" = true ]; then
-		rtt=`echo "${traceRoute}" | awk '{print $3}'`
-	else
-		rtt=`echo "${traceRoute}" | awk '{print $4}'`
-	fi
+	rtt=`echo "${traceRoute}" | awk '{print $(NF-1)}'`
 	not=`echo "${rtt}" | tr -d ".0123456789"`
 
 	[ "${d}" = "yes" ] && echo "$nowd"
