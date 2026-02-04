@@ -341,7 +341,7 @@ _quit() {
 		exit
 }
 
-while getopts Zdhzq46:w:cr:nNFSAEi:f:l:m:p:s:x:CM:o opt ; do
+while getopts Zdhzq:46w:cr:nNFSAEi:f:l:m:p:s:x:CM:o opt ; do
 	case "$opt" in
 		d|c|C) eval $opt="yes" ;;
 		q|x) eval $opt="$OPTARG" ;;
